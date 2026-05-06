@@ -19,7 +19,8 @@ export function createParticipantSessionModel(presentationData) {
       count: theme.count,
       color: theme.color,
       subthemes: [...theme.subthemes],
-      quotes: theme.quotes.slice(0, 3).map((quote) => ({
+      keyBlockers: theme.keyBlockers,
+      quotes: theme.keyBlockers.flatMap(blocker => blocker.quotes).slice(0, 3).map((quote) => ({
         id: quote.id,
         text: quote.text,
       })),

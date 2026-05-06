@@ -391,7 +391,7 @@ function ReportView({ presentationData, onDownloadReport }) {
                       Representative Quotes
                     </p>
                     <div className="space-y-3">
-                      {theme.quotes.slice(0, 3).map((quote) => (
+                      {theme.keyBlockers.flatMap(blocker => blocker.quotes).slice(0, 3).map((quote) => (
                         <blockquote
                           key={quote.id}
                           className="rounded-xl border border-[var(--presentation-border)] bg-[var(--presentation-surface)] px-4 py-3 text-sm leading-relaxed text-[var(--presentation-text-muted)]"

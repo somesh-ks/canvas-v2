@@ -90,7 +90,7 @@ function buildReportBlocks(data) {
       size: 11,
       gapAfter: 5,
     });
-    theme.quotes.slice(0, 3).forEach((quote) => {
+    theme.keyBlockers.flatMap(blocker => blocker.quotes).slice(0, 3).forEach((quote) => {
       blocks.push({ text: `- "${quote.text}"`, size: 10, gapAfter: 4 });
     });
     blocks.push({ text: "", size: 11, gapAfter: 8 });
