@@ -86,7 +86,7 @@ function buildReportBlocks(data) {
     });
     blocks.push({ text: theme.description, size: 11, gapAfter: 5 });
     blocks.push({
-      text: `Sub-themes: ${theme.subthemes.join(", ")}`,
+      text: `Sub-themes: ${theme.subthemes.map(st => st.name).join(", ")}`,
       size: 11,
       gapAfter: 5,
     });

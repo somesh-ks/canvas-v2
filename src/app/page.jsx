@@ -380,7 +380,7 @@ function ReportView({ presentationData, onDownloadReport }) {
                     <div className="flex flex-wrap gap-2.5">
                       {theme.subthemes.map((sub, i) => (
                         <span key={i} className={presentationSubthemePillClass}>
-                          {sub}
+                          {sub.name}
                         </span>
                       ))}
                     </div>
@@ -620,6 +620,7 @@ export default function PresentationPage() {
     votingEnabled,
     votingSession,
     actionState,
+    selectedThemeId,
   ]);
 
   const totalSlides = slides.length;

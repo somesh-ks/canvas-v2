@@ -268,10 +268,10 @@ function InsightsView({ session, activeInsightIndex }) {
         <div className="mt-4 flex flex-wrap gap-2.5">
           {activeTheme.subthemes.map((subtheme) => (
             <span
-              key={subtheme}
+              key={subtheme.name}
               className={presentationSubthemePillClass}
             >
-              {subtheme}
+              {subtheme.name}
             </span>
           ))}
         </div>

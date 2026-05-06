@@ -53,7 +53,7 @@ export function getExecutiveSummary(data) {
       : `${respondentCount} respondents surfaced a concentrated set of themes across the canvas.`,
     takeaways: [
       leadTheme
-        ? `${leadTheme.title} is the strongest signal at ${leadTheme.percentage}% of coded responses, pointing to a need for clearer strategic reasoning around ${leadTheme.subthemes.slice(0, 2).join(" and ").toLowerCase()}.`
+        ? `${leadTheme.title} is the strongest signal at ${leadTheme.percentage}% of coded responses, pointing to a need for clearer strategic reasoning around ${leadTheme.subthemes.slice(0, 2).map(st => st.name).join(" and ").toLowerCase()}.`
         : "The canvas points to a concentrated set of recurring strategic concerns.",
       secondTheme
         ? `${secondTheme.title} follows closely, suggesting the canvas is not asking for more ambition but for a smaller set of visible priorities that teams can act on.`
@@ -93,7 +93,7 @@ export function getResultsSnapshotSummary(data, votingState = {}) {
     takeaways: [
       `${topTheme?.title} leads the live prioritization with ${topTheme?.percentage}% of votes.`,
       `${participantsCompleted} participants completed voting with ${totalVotes} total votes cast.`,
-      `${topTheme?.subthemes?.[0]} is the strongest recurring signal behind the leading theme.`,
+      `${topTheme?.subthemes?.[0]?.name} is the strongest recurring signal behind the leading theme.`,
     ],
     showTakeaways: true,
   };

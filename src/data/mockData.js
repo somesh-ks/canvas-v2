@@ -114,14 +114,19 @@ export const presentationData = {
       id: "t1",
       title: "Strategic Clarity",
       description:
-        "A strong desire for clearer communication of the long-term vision and the reasoning behind major strategic pivots.",
+        "A strong desire for clearer communication of the long-term vision and the reasoning behind major strategic pivots. Teams want to understand not just what we're doing, but why — and how it connects to their daily work. Alignment on direction is seen as foundational to building confidence across the organization.",
       count: 45,
       percentage: 36,
       color: "lavender",
       subthemes: [
-        "Vision Alignment",
-        "Decision Transparency",
-        "Roadmap Clarity",
+        { name: "Vision Alignment", summary: "Ensuring all teams share a consistent understanding of our long-term direction." },
+        { name: "Decision Transparency", summary: "Openly communicating the reasoning behind major decisions before they're announced." },
+        { name: "Roadmap Clarity", summary: "Providing an accessible, up-to-date view of upcoming priorities and initiatives." },
+      ],
+      keyBlockers: [
+        "Communicating long-term goals",
+        "Resistance to change",
+        "Misalignment among teams",
       ],
       quotes: [
         {
@@ -159,14 +164,19 @@ export const presentationData = {
       id: "t2",
       title: "Operational Focus",
       description:
-        "Feedback regarding the need to prioritize fewer, high-impact initiatives rather than spreading resources too thin.",
+        "Feedback reflecting a need to prioritize fewer, higher-impact initiatives rather than spreading resources across too many competing efforts. Teams feel the cognitive load of constant context-switching and unclear tradeoffs. A tighter focus would unlock greater execution quality and reduce wasted motion.",
       count: 38,
       percentage: 31,
       color: "blue",
       subthemes: [
-        "Resource Allocation",
-        "Priority Setting",
-        "Process Efficiency",
+        { name: "Resource Allocation", summary: "Directing time and budget toward the efforts with the highest strategic return." },
+        { name: "Priority Setting", summary: "Establishing clear and consistent criteria for what gets worked on and why." },
+        { name: "Process Efficiency", summary: "Reducing friction in recurring workflows to reclaim meaningful working time." },
+      ],
+      keyBlockers: [
+        "Unclear prioritization criteria",
+        "Resource overextension",
+        "Frequent scope changes",
       ],
       quotes: [
         { id: 201, text: "We're trying to do too many things at once." },
@@ -204,11 +214,20 @@ export const presentationData = {
       id: "t3",
       title: "Collaborative Culture",
       description:
-        "Recognition of our strong team bonds coupled with a request for better tools and processes to bridge departmental silos.",
+        "Recognition of our strong team bonds coupled with a clear request for better tools and processes to bridge departmental silos. Knowledge is seen as unevenly distributed, and cross-functional collaboration is rewarding but difficult to coordinate. People want intentional structures to connect and learn from one another.",
       count: 32,
       percentage: 26,
       color: "sage",
-      subthemes: ["Cross-team Sync", "Knowledge Sharing", "Social Connection"],
+      subthemes: [
+        { name: "Cross-team Sync", summary: "Creating regular, lightweight touchpoints for teams to share progress and surface blockers." },
+        { name: "Knowledge Sharing", summary: "Building systems to capture and distribute institutional knowledge across the organization." },
+        { name: "Social Connection", summary: "Preserving the informal relationships that fuel trust and creative collaboration." },
+      ],
+      keyBlockers: [
+        "Departmental silos",
+        "Knowledge hoarding",
+        "Lack of shared tools",
+      ],
       quotes: [
         { id: 301, text: "The best ideas happen when we talk across teams." },
         { id: 302, text: "Silos are our biggest enemy." },
@@ -242,11 +261,20 @@ export const presentationData = {
       id: "t4",
       title: "Leadership Visibility",
       description:
-        "Teams want more regular access to leadership context, clearer decision ownership, and visible follow-through on commitments.",
+        "Teams want more regular access to leadership context, clearer decision ownership, and visible follow-through on commitments made. The gap between strategic decisions and their communication downstream creates uncertainty and disengagement. Leaders who show up more consistently signal trust and direction in moments of change.",
       count: 24,
       percentage: 19,
       color: "peach",
-      subthemes: ["Decision Ownership", "Leadership Access", "Follow-through"],
+      subthemes: [
+        { name: "Decision Ownership", summary: "Making it clear who holds final accountability for key strategic and operational choices." },
+        { name: "Leadership Access", summary: "Increasing the frequency and authenticity of direct leadership communication." },
+        { name: "Follow-through", summary: "Visibly closing the loop on commitments to build credibility and trust over time." },
+      ],
+      keyBlockers: [
+        "Inconsistent communication cadence",
+        "Unclear decision ownership",
+        "Delayed follow-through",
+      ],
       quotes: [
         {
           id: 401,
@@ -266,11 +294,20 @@ export const presentationData = {
       id: "t5",
       title: "Learning Velocity",
       description:
-        "People are asking for faster feedback loops, more experimentation, and clearer ways to learn from what is working.",
+        "People are asking for faster feedback loops, more room to experiment, and clearer systems for learning from what is and isn't working. The current pace of iteration is seen as too slow to stay responsive to a changing environment. Structured learning routines would accelerate growth without requiring large resource investments.",
       count: 18,
       percentage: 15,
       color: "butter",
-      subthemes: ["Experimentation", "Feedback Loops", "Shared Learning"],
+      subthemes: [
+        { name: "Experimentation", summary: "Creating safe conditions for small, fast tests that generate actionable learning." },
+        { name: "Feedback Loops", summary: "Shortening the time between action and insight so teams can adapt more quickly." },
+        { name: "Shared Learning", summary: "Making insights visible across the organization so wins and failures teach everyone." },
+      ],
+      keyBlockers: [
+        "Slow feedback cycles",
+        "Risk aversion",
+        "Disconnected learnings",
+      ],
       quotes: [
         {
           id: 501,
@@ -290,11 +327,20 @@ export const presentationData = {
       id: "t6",
       title: "Manager Enablement",
       description:
-        "Managers need more support, clearer operating rituals, and better tools to translate strategy into weekly execution.",
+        "Managers need more support, clearer operating rituals, and better tools to translate strategy into weekly execution for their teams. Many are doing important bridging work without adequate resources or structures to do it consistently. Strengthening this layer would amplify the impact of strategic decisions at every level.",
       count: 15,
       percentage: 12,
       color: "blush",
-      subthemes: ["Team Rituals", "Manager Tooling", "Execution Coaching"],
+      subthemes: [
+        { name: "Team Rituals", summary: "Establishing consistent operating rhythms that help teams stay aligned week to week." },
+        { name: "Manager Tooling", summary: "Providing managers with the resources and templates needed to run effective team practices." },
+        { name: "Execution Coaching", summary: "Offering structured support to help managers bridge strategy and day-to-day action." },
+      ],
+      keyBlockers: [
+        "Limited operating support",
+        "Unclear rituals",
+        "Strategy-execution gap",
+      ],
       quotes: [
         {
           id: 601,

@@ -7,11 +7,6 @@ import {
 } from "../../lib/presentationTheme";
 
 const ui = presentationTheme.classes;
-const colorMap = {
-  lavender: presentationTheme.tones.lavender,
-  blue: presentationTheme.tones.blue,
-  sage: presentationTheme.tones.sage,
-};
 
 export default function ThemeDetailsSlide({ themeId, onThemeChange }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -170,13 +165,20 @@ export default function ThemeDetailsSlide({ themeId, onThemeChange }) {
 
       <div className={`${ui.panelStrong} rounded-[32px] p-10 shadow-soft-md space-y-12 animate-in slide-in-from-bottom-4 duration-500`}>
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-          <div className="space-y-3">
+          <div className="space-y-4 max-w-[740px]">
             <h3 className={`text-3xl font-semibold ${ui.text}`}>
               {selectedTheme.title}
             </h3>
-            <p className={`text-xl ${ui.text} max-w-xl leading-relaxed`}>
+            <p className={`text-xl ${ui.text} leading-relaxed`}>
               {selectedTheme.description}
             </p>
+            <ol className={`list-decimal space-y-1 pl-6 text-xl ${ui.text}`}>
+              {selectedTheme.subthemes.map((st, i) => (
+                <li key={i} className="leading-relaxed">
+                  <span className="font-semibold">{st.name}</span>: {st.summary}
+                </li>
+              ))}
+            </ol>
           </div>
 
           <div className={`${ui.mutedPanel} flex-shrink-0 rounded-2xl px-8 py-6 space-y-1`}>
@@ -190,14 +192,14 @@ export default function ThemeDetailsSlide({ themeId, onThemeChange }) {
         </div>
 
         <div className="space-y-6">
-          <h4 className={`text-base font-semibold ${ui.text}`}>Key sub-themes</h4>
+          <h4 className={`text-base font-semibold ${ui.text}`}>Key blockers</h4>
           <div className="flex flex-wrap gap-3">
-            {selectedTheme.subthemes.map((st, i) => (
+            {selectedTheme.keyBlockers.map((blocker, i) => (
               <div
                 key={i}
                 className={`${presentationSubthemePillClass} text-lg`}
               >
-                {st}
+                {blocker}
               </div>
             ))}
           </div>
@@ -209,7 +211,7 @@ export default function ThemeDetailsSlide({ themeId, onThemeChange }) {
             {selectedTheme.quotes.slice(0, 7).map((q, index) => (
               <div
                 key={q.id}
-                className={`p-6 rounded-[24px] border transition-all ${colorMap[selectedTheme.color]}`}
+                className={`p-6 rounded-[24px] border transition-all ${presentationTheme.tones[selectedTheme.color]}`}
               >
                 <p
                   className={`text-lg leading-relaxed font-medium ${ui.text} ${getRandomFont(index)}`}
