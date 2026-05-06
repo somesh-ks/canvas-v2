@@ -1,15 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { presentationData } from "../../data/mockData";
 import {
-  presentationSubthemePillClass,
   presentationTheme,
+  presentationToneFamily,
+  presentationAccentClasses,
 } from "../../lib/presentationTheme";
 
 const ui = presentationTheme.classes;
 
 export default function ThemeDetailsSlide({ themeId, onThemeChange }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [selectedBlockerIndex, setSelectedBlockerIndex] = useState(0);
+  const activeTabRef = useRef(null);
 
   const { themes, metrics } = presentationData;
 
@@ -62,6 +65,16 @@ export default function ThemeDetailsSlide({ themeId, onThemeChange }) {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [currentThemeIndex]);
+
+  useEffect(() => {
+    setSelectedBlockerIndex(0);
+  }, [selectedThemeId]);
+
+  useEffect(() => {
+    if (activeTabRef.current) {
+      activeTabRef.current.focus();
+    }
+  }, [selectedBlockerIndex]);
 
   const fontStyles = [
     "font-noto-sans",
@@ -193,34 +206,65 @@ export default function ThemeDetailsSlide({ themeId, onThemeChange }) {
 
         <div className="space-y-6">
           <h4 className={`text-base font-semibold ${ui.text}`}>Key blockers</h4>
-          <div className="flex flex-wrap gap-3">
-            {selectedTheme.keyBlockers.map((blocker, i) => (
-              <div
-                key={i}
-                className={`${presentationSubthemePillClass} text-lg`}
-              >
-                {blocker}
-              </div>
-            ))}
+          <div className="flex flex-wrap gap-3" role="tablist">
+            {selectedTheme.keyBlockers.map((blocker, i) => {
+              const isActive = selectedBlockerIndex === i;
+              const themeFamily = presentationToneFamily[selectedTheme.color];
+              const accent = presentationAccentClasses[themeFamily];
+
+              return (
+                <button
+                  ref={isActive ? activeTabRef : null}
+                  key={i}
+                  id={`blocker-${i}`}
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-controls={`quotes-panel-${i}`}
+                  tabIndex={isActive ? 0 : -1}
+                  onClick={() => setSelectedBlockerIndex(i)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'ArrowRight') {
+                      e.preventDefault();
+                      const nextIndex = (i + 1) % selectedTheme.keyBlockers.length;
+                      setSelectedBlockerIndex(nextIndex);
+                    } else if (e.key === 'ArrowLeft') {
+                      e.preventDefault();
+                      const prevIndex = i === 0 ? selectedTheme.keyBlockers.length - 1 : i - 1;
+                      setSelectedBlockerIndex(prevIndex);
+                    }
+                  }}
+                  className={`rounded-full border px-3 py-2 text-xl font-medium transition-all ${
+                    isActive
+                      ? `${accent.soft} ${accent.strong} border-transparent`
+                      : `border-[var(--presentation-border)] bg-[var(--presentation-surface-elevated)] text-[var(--presentation-text)] hover:bg-[var(--presentation-surface-muted)]`
+                  }`}
+                >
+                  {blocker.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        <div className="space-y-6">
-          <h4 className={`text-base font-semibold ${ui.text}`}>Supporting quotes</h4>
-          <div className="grid md:grid-cols-2 gap-6">
-            {selectedTheme.quotes.slice(0, 7).map((q, index) => (
-              <div
-                key={q.id}
-                className={`p-6 rounded-[24px] border transition-all ${presentationTheme.tones[selectedTheme.color]}`}
+        <div
+          role="tabpanel"
+          id={`quotes-panel-${selectedBlockerIndex}`}
+          aria-labelledby={`blocker-${selectedBlockerIndex}`}
+          className="grid md:grid-cols-2 gap-6 transition-opacity duration-300"
+          key={selectedBlockerIndex}
+        >
+          {selectedTheme.keyBlockers[selectedBlockerIndex]?.quotes.map((q, index) => (
+            <div
+              key={q.id}
+              className={`p-6 rounded-[24px] border transition-all ${presentationTheme.tones[selectedTheme.color]}`}
+            >
+              <p
+                className={`text-lg leading-relaxed font-medium ${ui.text} ${getRandomFont(index)}`}
               >
-                <p
-                  className={`text-lg leading-relaxed font-medium ${ui.text} ${getRandomFont(index)}`}
-                >
-                  "{q.text}"
-                </p>
-              </div>
-            ))}
-          </div>
+                "{q.text}"
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </div>

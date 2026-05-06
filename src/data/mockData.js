@@ -124,39 +124,28 @@ export const presentationData = {
         { name: "Roadmap Clarity", summary: "Providing an accessible, up-to-date view of upcoming priorities and initiatives." },
       ],
       keyBlockers: [
-        "Communicating long-term goals",
-        "Resistance to change",
-        "Misalignment among teams",
-      ],
-      quotes: [
         {
-          id: 101,
-          text: "I want to know why we are choosing this path over others.",
+          label: "Communicating long-term goals",
+          quotes: [
+            { id: 101, text: "I want to know why we are choosing this path over others." },
+            { id: 102, text: "The strategy deck was good, but how does it change my daily work?" },
+            { id: 103, text: "We need a north star that everyone can point to." },
+            { id: 104, text: "Our vision feels abstract. How do we measure success concretely?" },
+          ]
         },
         {
-          id: 102,
-          text: "The strategy deck was good, but how does it change my daily work?",
-        },
-        { id: 103, text: "We need a north star that everyone can point to." },
-        {
-          id: 104,
-          text: "Our vision feels abstract. How do we measure success concretely?",
-        },
-        {
-          id: 105,
-          text: "Strategic updates come too infrequently. We need regular touchpoints.",
+          label: "Resistance to change",
+          quotes: [
+            { id: 105, text: "Strategic updates come too infrequently. We need regular touchpoints." },
+            { id: 106, text: "I'd love to see how my team's work ties into the bigger picture." },
+            { id: 107, text: "The quarterly goals are clear, but the multi-year vision is fuzzy." },
+          ]
         },
         {
-          id: 106,
-          text: "I'd love to see how my team's work ties into the bigger picture.",
-        },
-        {
-          id: 107,
-          text: "The quarterly goals are clear, but the multi-year vision is fuzzy.",
-        },
-        {
-          id: 108,
-          text: "Decision-making seems reactive rather than proactive sometimes.",
+          label: "Misalignment among teams",
+          quotes: [
+            { id: 108, text: "Decision-making seems reactive rather than proactive sometimes." },
+          ]
         },
       ],
     },
@@ -174,39 +163,28 @@ export const presentationData = {
         { name: "Process Efficiency", summary: "Reducing friction in recurring workflows to reclaim meaningful working time." },
       ],
       keyBlockers: [
-        "Unclear prioritization criteria",
-        "Resource overextension",
-        "Frequent scope changes",
-      ],
-      quotes: [
-        { id: 201, text: "We're trying to do too many things at once." },
         {
-          id: 202,
-          text: "Let's finish what we started before launching the next big thing.",
+          label: "Unclear prioritization criteria",
+          quotes: [
+            { id: 201, text: "We're trying to do too many things at once." },
+            { id: 202, text: "Let's finish what we started before launching the next big thing." },
+            { id: 203, text: "Our resources are stretched thin across too many projects." },
+          ]
         },
         {
-          id: 203,
-          text: "Our resources are stretched thin across too many projects.",
+          label: "Resource overextension",
+          quotes: [
+            { id: 204, text: "I'm not sure which tasks are actually urgent versus just noisy." },
+            { id: 205, text: "We need clearer criteria for what gets prioritized and why." },
+            { id: 206, text: "Process improvements could save us hours every week." },
+          ]
         },
         {
-          id: 204,
-          text: "I'm not sure which tasks are actually urgent versus just noisy.",
-        },
-        {
-          id: 205,
-          text: "We need clearer criteria for what gets prioritized and why.",
-        },
-        {
-          id: 206,
-          text: "Process improvements could save us hours every week.",
-        },
-        {
-          id: 207,
-          text: "The roadmap changes so often, it's hard to commit to anything long-term.",
-        },
-        {
-          id: 208,
-          text: "Sometimes I feel like we're moving fast but not forward.",
+          label: "Frequent scope changes",
+          quotes: [
+            { id: 207, text: "The roadmap changes so often, it's hard to commit to anything long-term." },
+            { id: 208, text: "Sometimes I feel like we're moving fast but not forward." },
+          ]
         },
       ],
     },
@@ -224,36 +202,28 @@ export const presentationData = {
         { name: "Social Connection", summary: "Preserving the informal relationships that fuel trust and creative collaboration." },
       ],
       keyBlockers: [
-        "Departmental silos",
-        "Knowledge hoarding",
-        "Lack of shared tools",
-      ],
-      quotes: [
-        { id: 301, text: "The best ideas happen when we talk across teams." },
-        { id: 302, text: "Silos are our biggest enemy." },
         {
-          id: 303,
-          text: "I wish there was an easier way to see what other teams are working on.",
+          label: "Departmental silos",
+          quotes: [
+            { id: 301, text: "The best ideas happen when we talk across teams." },
+            { id: 302, text: "Silos are our biggest enemy." },
+            { id: 303, text: "I wish there was an easier way to see what other teams are working on." },
+            { id: 304, text: "Our culture is amazing but we need better systems to preserve it as we grow." },
+          ]
         },
         {
-          id: 304,
-          text: "Our culture is amazing but we need better systems to preserve it as we grow.",
+          label: "Knowledge hoarding",
+          quotes: [
+            { id: 305, text: "Knowledge is trapped in people's heads. We need better documentation." },
+            { id: 306, text: "Cross-functional projects are the most rewarding but also the hardest to coordinate." },
+          ]
         },
         {
-          id: 305,
-          text: "Knowledge is trapped in people's heads. We need better documentation.",
-        },
-        {
-          id: 306,
-          text: "Cross-functional projects are the most rewarding but also the hardest to coordinate.",
-        },
-        {
-          id: 307,
-          text: "Remote work is great but we're missing the informal hallway conversations.",
-        },
-        {
-          id: 308,
-          text: "I learn the most when I can shadow someone from a different department.",
+          label: "Lack of shared tools",
+          quotes: [
+            { id: 307, text: "Remote work is great but we're missing the informal hallway conversations." },
+            { id: 308, text: "I learn the most when I can shadow someone from a different department." },
+          ]
         },
       ],
     },
@@ -271,22 +241,23 @@ export const presentationData = {
         { name: "Follow-through", summary: "Visibly closing the loop on commitments to build credibility and trust over time." },
       ],
       keyBlockers: [
-        "Inconsistent communication cadence",
-        "Unclear decision ownership",
-        "Delayed follow-through",
-      ],
-      quotes: [
         {
-          id: 401,
-          text: "I want to hear more directly from leadership when priorities change.",
+          label: "Inconsistent communication cadence",
+          quotes: [
+            { id: 401, text: "I want to hear more directly from leadership when priorities change." },
+          ]
         },
         {
-          id: 402,
-          text: "We need clearer accountability for who owns the final call.",
+          label: "Unclear decision ownership",
+          quotes: [
+            { id: 402, text: "We need clearer accountability for who owns the final call." },
+          ]
         },
         {
-          id: 403,
-          text: "Visibility matters more than perfection when change is happening quickly.",
+          label: "Delayed follow-through",
+          quotes: [
+            { id: 403, text: "Visibility matters more than perfection when change is happening quickly." },
+          ]
         },
       ],
     },
@@ -304,22 +275,23 @@ export const presentationData = {
         { name: "Shared Learning", summary: "Making insights visible across the organization so wins and failures teach everyone." },
       ],
       keyBlockers: [
-        "Slow feedback cycles",
-        "Risk aversion",
-        "Disconnected learnings",
-      ],
-      quotes: [
         {
-          id: 501,
-          text: "We need to know faster whether something is working or not.",
+          label: "Slow feedback cycles",
+          quotes: [
+            { id: 501, text: "We need to know faster whether something is working or not." },
+          ]
         },
         {
-          id: 502,
-          text: "Small experiments would help us learn without overcommitting.",
+          label: "Risk aversion",
+          quotes: [
+            { id: 502, text: "Small experiments would help us learn without overcommitting." },
+          ]
         },
         {
-          id: 503,
-          text: "Good insights are getting lost because we do not close the loop visibly.",
+          label: "Disconnected learnings",
+          quotes: [
+            { id: 503, text: "Good insights are getting lost because we do not close the loop visibly." },
+          ]
         },
       ],
     },
@@ -337,22 +309,23 @@ export const presentationData = {
         { name: "Execution Coaching", summary: "Offering structured support to help managers bridge strategy and day-to-day action." },
       ],
       keyBlockers: [
-        "Limited operating support",
-        "Unclear rituals",
-        "Strategy-execution gap",
-      ],
-      quotes: [
         {
-          id: 601,
-          text: "Managers are doing translation work that should be easier and more consistent.",
+          label: "Limited operating support",
+          quotes: [
+            { id: 601, text: "Managers are doing translation work that should be easier and more consistent." },
+          ]
         },
         {
-          id: 602,
-          text: "Better operating rhythms would reduce confusion for teams.",
+          label: "Unclear rituals",
+          quotes: [
+            { id: 602, text: "Better operating rhythms would reduce confusion for teams." },
+          ]
         },
         {
-          id: 603,
-          text: "The strategy makes sense, but frontline execution support is thin.",
+          label: "Strategy-execution gap",
+          quotes: [
+            { id: 603, text: "The strategy makes sense, but frontline execution support is thin." },
+          ]
         },
       ],
     },

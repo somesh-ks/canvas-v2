@@ -5,7 +5,9 @@
       "mcp__plugin_figma_figma__get_metadata",
       "mcp__plugin_figma_figma__use_figma",
       "mcp__plugin_figma_figma__generate_figma_design",
-      "Bash(netstat:*)"
+      "Bash(netstat:*)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
     ]
   }
 }
