@@ -205,7 +205,7 @@ export default function ThemeDetailsSlide({ themeId, onThemeChange }) {
         </div>
 
         <div className="space-y-6">
-          <h4 className={`text-base font-semibold ${ui.text}`}>Key blockers</h4>
+          <h4 className={`text-lg font-semibold ${ui.text}`}>Key blockers</h4>
           <div className="flex flex-wrap gap-3" role="tablist">
             {selectedTheme.keyBlockers.map((blocker, i) => {
               const isActive = selectedBlockerIndex === i;
