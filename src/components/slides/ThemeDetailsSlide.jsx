@@ -233,7 +233,7 @@ export default function ThemeDetailsSlide({ themeId, onThemeChange }) {
                       setSelectedBlockerIndex(prevIndex);
                     }
                   }}
-                  className={`rounded-full border px-3 py-2 text-xl font-medium transition-all ${
+                  className={`rounded-full border px-5 py-3 text-xl font-medium transition-all ${
                     isActive
                       ? `${accent.soft} ${accent.strong} border-transparent`
                       : `border-[var(--presentation-border)] bg-[var(--presentation-surface-elevated)] text-[var(--presentation-text)] hover:bg-[var(--presentation-surface-muted)]`
