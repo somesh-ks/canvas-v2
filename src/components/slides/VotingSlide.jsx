@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import {
   BarChart3,
   CheckCircle2,
+  ChevronDown,
   Circle,
   Eye,
   ExternalLink,
@@ -42,6 +43,14 @@ export default function VotingSlide({
   const initialVoteCounts = Object.fromEntries(themes.map((theme) => [theme.id, theme.count]));
 
   const [isQrOverlayOpen, setIsQrOverlayOpen] = useState(false);
+  const [openThemes, setOpenThemes] = useState({});
+  const [themeAnnotations, setThemeAnnotations] = useState({});
+
+  const toggleTheme = (id) =>
+    setOpenThemes((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  const updateAnnotation = (id, field, value) =>
+    setThemeAnnotations((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
 
   const rankedThemes = useMemo(() => {
     const totalVotes = Object.values(voteCounts).reduce((sum, n) => sum + n, 0);
@@ -323,45 +332,101 @@ export default function VotingSlide({
               <h3 className={`text-[1.9rem] font-medium leading-tight ${ui.text}`}>{question}</h3>
 
               <div className="space-y-4">
-                <p className={`text-base font-semibold ${ui.text}`}>Prioritization ranking</p>
-                {rankedThemes.map((theme, index) => (
-                  <div
-                    key={theme.id}
-                    className="rounded-2xl p-3 border border-[var(--presentation-border)] bg-white/75"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="relative rounded-2xl bg-white/70 overflow-hidden">
-                          <div
-                            className="absolute inset-y-1 left-1 rounded-[18px] bg-[linear-gradient(90deg,#d9ccff_0%,#ece2ff_52%,#f7f1ff_100%)] shadow-[0_2px_8px_rgba(124,58,237,0.12)] transition-[width] duration-500 ease-out"
-                            style={{ width: getResultBarWidth(theme.percentage) }}
-                          />
-                          <div className="relative z-10 min-h-[64px] flex items-center px-4">
-                            <div className="flex items-center gap-3 min-w-0">
-                              <span
-                                className={`h-7 w-7 rounded-full ${ui.surfaceElevated} ${ui.border} border flex items-center justify-center text-sm font-semibold ${ui.textMuted} shrink-0`}
-                                aria-hidden="true"
-                              >
-                                {index + 1}
-                              </span>
-                              <p className={`text-lg font-medium ${ui.text} truncate whitespace-nowrap`}>
-                                {theme.title}
-                              </p>
+                <p className={`text-lg font-semibold ${ui.text}`}>Prioritization ranking</p>
+                {rankedThemes.map((theme) => {
+                  const isOpen = !!openThemes[theme.id];
+                  const annotations = themeAnnotations[theme.id] || {};
+                  return (
+                    <div
+                      key={theme.id}
+                      className="rounded-2xl p-3 border border-[var(--presentation-border)] bg-white/75"
+                    >
+                      {/* Header row — always visible */}
+                      <button
+                        type="button"
+                        onClick={() => toggleTheme(theme.id)}
+                        className="w-full flex items-center gap-4 text-left"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="relative rounded-2xl bg-white/70 overflow-hidden">
+                            <div
+                              className="absolute inset-y-1 left-1 rounded-[18px] bg-[linear-gradient(90deg,#d9ccff_0%,#ece2ff_52%,#f7f1ff_100%)] shadow-[0_2px_8px_rgba(124,58,237,0.12)] transition-[width] duration-500 ease-out"
+                              style={{ width: getResultBarWidth(theme.percentage) }}
+                            />
+                            <div className="relative z-10 min-h-[64px] flex items-center px-4">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <span
+                                  className={`h-7 w-7 rounded-full ${ui.surfaceElevated} ${ui.border} border flex items-center justify-center shrink-0`}
+                                >
+                                  <ChevronDown
+                                    size={15}
+                                    className={`${ui.textMuted} transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+                                  />
+                                </span>
+                                <p className={`text-lg font-medium ${ui.text} truncate whitespace-nowrap`}>
+                                  {theme.title}
+                                </p>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="w-[132px] text-right shrink-0">
-                        <p className={`text-xl font-semibold leading-none ${ui.text}`}>
-                          {theme.percentage}%
-                        </p>
-                        <p className={`mt-2 text-base font-medium leading-none ${ui.textMuted}`}>
-                          {theme.votes} votes
-                        </p>
-                      </div>
+                        <div className="w-[132px] text-right shrink-0">
+                          <p className={`text-xl font-semibold leading-none ${ui.text}`}>
+                            {theme.percentage}%
+                          </p>
+                          <p className={`mt-2 text-base font-medium leading-none ${ui.textMuted}`}>
+                            {theme.votes} votes
+                          </p>
+                        </div>
+                      </button>
+
+                      {/* Expanded content */}
+                      {isOpen && (
+                        <div className="flex gap-6 pt-4 px-1">
+                          {/* Left: auto summary */}
+                          <div className="flex-[3] space-y-2">
+                            <p className={`text-sm font-semibold uppercase tracking-wide ${ui.textMuted}`}>
+                              Summary
+                            </p>
+                            <p className={`text-base ${ui.text} leading-relaxed`}>
+                              {theme.description}
+                            </p>
+                          </div>
+
+                          {/* Right: owner + notes */}
+                          <div className="flex-[2] space-y-4">
+                            <div className="space-y-1.5">
+                              <label className={`text-sm font-semibold uppercase tracking-wide ${ui.textMuted}`}>
+                                Owner
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="Assign owner..."
+                                value={annotations.owner || ""}
+                                onChange={(e) => updateAnnotation(theme.id, "owner", e.target.value)}
+                                onClick={(e) => e.stopPropagation()}
+                                className={`w-full rounded-xl px-3 py-2 text-base ${ui.text} bg-white/70 border border-[var(--presentation-border)] outline-none focus:ring-2 focus:ring-[var(--presentation-accent,#7c3aed)]/30`}
+                              />
+                            </div>
+                            <div className="space-y-1.5">
+                              <label className={`text-sm font-semibold uppercase tracking-wide ${ui.textMuted}`}>
+                                Notes
+                              </label>
+                              <textarea
+                                placeholder="Add notes..."
+                                rows={4}
+                                value={annotations.notes || ""}
+                                onChange={(e) => updateAnnotation(theme.id, "notes", e.target.value)}
+                                onClick={(e) => e.stopPropagation()}
+                                className={`w-full rounded-xl px-3 py-2 text-base ${ui.text} bg-white/70 border border-[var(--presentation-border)] outline-none focus:ring-2 focus:ring-[var(--presentation-accent,#7c3aed)]/30 resize-none`}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </section>

@@ -543,68 +543,38 @@ export default function PresentationPage() {
       });
     }
 
+    if (!votingEnabled) {
+      baseSlides.push({
+        id: "action-v1",
+        title: "Action Center",
+        component: (
+          <ActionPlanV1Slide
+            presentationData={presentationData}
+            votingSession={votingSession}
+            actionState={actionState}
+            onActionStateChange={setActionState}
+          />
+        ),
+      });
+    }
+
     baseSlides.push({
       id: "results-snapshot",
-      title: "Results",
+      title: "Conclusion",
       component: (
         <ResultsSnapshotSlide
           presentationData={presentationData}
           votingSession={votingSession}
+          actionState={actionState}
         />
       ),
     });
 
-    baseSlides.push({
-      id: "action-v1",
-      title: "Action: Command Board",
-      component: (
-        <ActionPlanV1Slide
-          presentationData={presentationData}
-          votingSession={votingSession}
-          actionState={actionState}
-          onActionStateChange={setActionState}
-        />
-      ),
-    });
 
-    baseSlides.push({
-      id: "action-v2",
-      title: "Action: Breakout Cards",
-      component: (
-        <ActionPlanV2Slide
-          presentationData={presentationData}
-          votingSession={votingSession}
-          actionState={actionState}
-          onActionStateChange={setActionState}
-        />
-      ),
-    });
-
-    baseSlides.push({
-      id: "action-v3",
-      title: "Action: Focus View",
-      component: (
-        <ActionPlanV3Slide
-          presentationData={presentationData}
-          votingSession={votingSession}
-          actionState={actionState}
-          onActionStateChange={setActionState}
-        />
-      ),
-    });
-
-    baseSlides.push({
-      id: "action-v4",
-      title: "Action: Owner Chips",
-      component: (
-        <ActionPlanV4Slide
-          presentationData={presentationData}
-          votingSession={votingSession}
-          actionState={actionState}
-          onActionStateChange={setActionState}
-        />
-      ),
-    });
+    // hidden slides — uncomment to restore
+    // baseSlides.push({ id: "action-v2", title: "Action: Breakout Cards", component: <ActionPlanV2Slide presentationData={presentationData} votingSession={votingSession} actionState={actionState} onActionStateChange={setActionState} /> });
+    // baseSlides.push({ id: "action-v3", title: "Action: Focus View", component: <ActionPlanV3Slide presentationData={presentationData} votingSession={votingSession} actionState={actionState} onActionStateChange={setActionState} /> });
+    // baseSlides.push({ id: "action-v4", title: "Action: Owner Chips", component: <ActionPlanV4Slide presentationData={presentationData} votingSession={votingSession} actionState={actionState} onActionStateChange={setActionState} /> });
 
     baseSlides.push({
       id: "thank-you",

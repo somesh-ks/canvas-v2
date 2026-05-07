@@ -77,13 +77,13 @@ export function getResultsSnapshotSummary(data, votingState = {}) {
   if (!isComplete) {
     return {
       title: "Top themes",
-      topThemes: getRankedThemes(data).slice(0, 6),
+      topThemes: getRankedThemes(data),
       takeaways: [],
       showTakeaways: false,
     };
   }
 
-  const rankedThemes = getRankedVotingThemes(data, voteCounts).slice(0, 3);
+  const rankedThemes = getRankedVotingThemes(data, voteCounts);
   const totalVotes = Object.values(voteCounts).reduce((sum, count) => sum + count, 0);
   const topTheme = rankedThemes[0] || getRankedThemes(data)[0];
 

@@ -1,20 +1,9 @@
 import { defineConfig } from 'vite';
-import babel from 'vite-plugin-babel';
 
 export default defineConfig({
   envPrefix: 'NEXT_PUBLIC_',
   logLevel: 'info',
-  plugins: [
-    babel({
-      include: ['src/**/*.{js,jsx,ts,tsx}'],
-      exclude: /node_modules/,
-      babelConfig: {
-        babelrc: false,
-        configFile: false,
-        plugins: ['styled-jsx/babel'],
-      },
-    }),
-  ],
+  plugins: [],
   resolve: {
     dedupe: ['react', 'react-dom'],
   },
