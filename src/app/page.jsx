@@ -14,6 +14,7 @@ import ActionPlanV1Slide from "../components/slides/ActionPlanV1Slide";
 import ActionPlanV2Slide from "../components/slides/ActionPlanV2Slide";
 import ActionPlanV3Slide from "../components/slides/ActionPlanV3Slide";
 import ActionPlanV4Slide from "../components/slides/ActionPlanV4Slide";
+import BreakoutReflectionsSlide from "../components/slides/BreakoutReflectionsSlide";
 import ThankYouSlide from "../components/slides/ThankYouSlide";
 import { presentationData as initialData } from "../data/mockData";
 import { presentationSubthemePillClass, presentationTheme } from "../lib/presentationTheme";
@@ -24,11 +25,32 @@ import {
   getRespondentCount,
 } from "../lib/presentationInsights";
 import { getParticipantPath, getPathForRoute, parseAppRoute } from "../lib/appRoutes";
+import {
+  readBreakoutReflections,
+  subscribeToBreakoutReflections,
+} from "../lib/breakoutReflections";
+import { writeParticipantAccess } from "../lib/participantAccess";
 import { createParticipantSessionModel } from "../lib/participantSession";
 
-const PUBLIC_APP_ORIGIN = (
-  import.meta.env.VITE_PUBLIC_APP_ORIGIN ?? "https://canvas-v2-can.vercel.app"
-).replace(/\/$/, "");
+function resolvePublicAppOrigin() {
+  const envOrigin =
+    import.meta.env.NEXT_PUBLIC_APP_ORIGIN ||
+    import.meta.env.VITE_PUBLIC_APP_ORIGIN;
+
+  if (envOrigin) {
+    return String(envOrigin).replace(/\/$/, "");
+  }
+
+  if (typeof window !== "undefined") {
+    return window.location.origin.replace(/\/$/, "");
+  }
+
+  return "https://canvas-v2-can.vercel.app";
+}
+
+function getParticipantModeQuery(votingEnabled) {
+  return votingEnabled ? "mode=prioritization" : "mode=readup";
+}
 
 function parseMetricNumber(value, fallback = 124) {
   const parsed = Number(String(value ?? "").replace(/[^0-9]/g, ""));
@@ -481,6 +503,7 @@ export default function PresentationPage() {
   const [selectedThemeId, setSelectedThemeId] = useState(initialData.themes[0].id);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [votingEnabled, setVotingEnabled] = useState(false);
+  const [discussionsEnabled, setDiscussionsEnabled] = useState(false);
   const [votingSession, setVotingSession] = useState(() => createVotingSession(initialData));
   const [showDeleteVotingResultsConfirm, setShowDeleteVotingResultsConfirm] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -499,19 +522,24 @@ export default function PresentationPage() {
     () => getParticipantPath(participantSession.sessionId),
     [participantSession.sessionId],
   );
-  const participantShareLink = `${PUBLIC_APP_ORIGIN}${participantPath}`;
+  const participantModeQuery = getParticipantModeQuery(votingEnabled);
+  const publicAppOrigin = resolvePublicAppOrigin();
+  const participantShareLink = `${publicAppOrigin}${participantPath}?${participantModeQuery}`;
   const activeView = route.kind === "report" ? "report" : "canvas";
+  const [breakoutReflections, setBreakoutReflections] = useState(() =>
+    readBreakoutReflections(participantSession.sessionId),
+  );
   const openParticipantPreview = React.useCallback(() => {
     const previewWindow = window.open(
-      participantPath,
+      participantShareLink,
       "participant-preview",
       "popup=yes,width=430,height=900,resizable=yes,scrollbars=yes",
     );
 
     if (!previewWindow) {
-      window.location.href = participantPath;
+      window.location.href = participantShareLink;
     }
-  }, [participantPath]);
+  }, [participantShareLink]);
 
   const slides = useMemo(() => {
     const baseSlides = [
@@ -533,6 +561,32 @@ export default function PresentationPage() {
       },
     ];
 
+    if (!votingEnabled) {
+      baseSlides.push({
+        id: "breakout-reflections",
+        title: "Breakout Reflections",
+        component: (
+          <BreakoutReflectionsSlide
+            presentationData={presentationData}
+            breakoutReflections={breakoutReflections}
+            onOpenShareModal={() => setIsShareModalOpen(true)}
+            discussionsEnabled={discussionsEnabled}
+            onToggleDiscussions={() =>
+              setDiscussionsEnabled((current) => {
+                const nextValue = !current;
+                writeParticipantAccess(
+                  participantSession.sessionId,
+                  votingEnabled,
+                  nextValue,
+                );
+                return nextValue;
+              })
+            }
+          />
+        ),
+      });
+    }
+
     if (votingEnabled) {
       baseSlides.push({
         id: "voting",
@@ -545,6 +599,30 @@ export default function PresentationPage() {
             participantJoinUrl={participantShareLink}
             onOpenParticipantPreview={openParticipantPreview}
             onOpenShareModal={() => setIsShareModalOpen(true)}
+          />
+        ),
+      });
+
+      baseSlides.push({
+        id: "breakout-reflections",
+        title: "Breakout Reflections",
+        component: (
+          <BreakoutReflectionsSlide
+            presentationData={presentationData}
+            breakoutReflections={breakoutReflections}
+            onOpenShareModal={() => setIsShareModalOpen(true)}
+            discussionsEnabled={discussionsEnabled}
+            onToggleDiscussions={() =>
+              setDiscussionsEnabled((current) => {
+                const nextValue = !current;
+                writeParticipantAccess(
+                  participantSession.sessionId,
+                  votingEnabled,
+                  nextValue,
+                );
+                return nextValue;
+              })
+            }
           />
         ),
       });
@@ -594,6 +672,8 @@ export default function PresentationPage() {
     openParticipantPreview,
     participantShareLink,
     presentationData,
+    breakoutReflections,
+    discussionsEnabled,
     votingEnabled,
     votingSession,
     actionState,
@@ -657,6 +737,7 @@ export default function PresentationPage() {
       setCurrentSlideId("results-snapshot");
     }
 
+    writeParticipantAccess(participantSession.sessionId, false, discussionsEnabled);
     setVotingEnabled(false);
   };
 
@@ -672,6 +753,7 @@ export default function PresentationPage() {
     }
 
     setVotingEnabled(true);
+    writeParticipantAccess(participantSession.sessionId, true, discussionsEnabled);
     setCurrentSlideId("voting");
   };
 
@@ -680,6 +762,23 @@ export default function PresentationPage() {
       setCurrentSlideId(slides[0]?.id ?? "overview");
     }
   }, [currentSlideId, slides]);
+
+  React.useEffect(() => {
+    writeParticipantAccess(
+      participantSession.sessionId,
+      votingEnabled,
+      discussionsEnabled,
+    );
+  }, [discussionsEnabled, participantSession.sessionId, votingEnabled]);
+
+  React.useEffect(() => {
+    setBreakoutReflections(readBreakoutReflections(participantSession.sessionId));
+
+    return subscribeToBreakoutReflections(
+      participantSession.sessionId,
+      setBreakoutReflections,
+    );
+  }, [participantSession.sessionId]);
 
   React.useEffect(() => {
     setVotingSession(createVotingSession(presentationData));
@@ -781,6 +880,7 @@ export default function PresentationPage() {
         onClose={() => setIsShareModalOpen(false)}
         participantLink={participantShareLink}
         votingEnabled={votingEnabled}
+        discussionsEnabled={discussionsEnabled}
       />
 
       {activeView === "canvas" ? (

@@ -5,12 +5,22 @@ import {
   ChevronRight,
   Layers3,
   ListChecks,
+  MessageSquareText,
 } from "lucide-react";
 import {
   presentationSubthemePillClass,
   presentationTheme,
   presentationToneCardClasses,
 } from "../lib/presentationTheme";
+import {
+  getParticipantModeFromSearch,
+  readParticipantAccess,
+  subscribeToParticipantAccess,
+} from "../lib/participantAccess";
+import {
+  createBreakoutReflectionId,
+  upsertBreakoutReflection,
+} from "../lib/breakoutReflections";
 
 const ui = presentationTheme.classes;
 const STORAGE_PREFIX = "participant-session:";
@@ -22,10 +32,13 @@ function getStorageKey(sessionId) {
 function getDefaultState(themeCount) {
   return {
     hasJoined: false,
-    activeTab: "prioritization",
+    activeTab: "insights",
     selectedThemeIds: [],
     hasSubmitted: false,
     activeInsightIndex: 0,
+    reflectionThemeId: "",
+    reflectionText: "",
+    reflectionEntries: [],
     themeCount,
   };
 }
@@ -50,6 +63,23 @@ function readStoredState(sessionId, themeCount) {
         Math.max(Number(parsedState.activeInsightIndex) || 0, 0),
         Math.max(themeCount - 1, 0),
       ),
+      reflectionThemeId:
+        typeof parsedState.reflectionThemeId === "string"
+          ? parsedState.reflectionThemeId
+          : "",
+      reflectionText:
+        typeof parsedState.reflectionText === "string"
+          ? parsedState.reflectionText
+          : "",
+      reflectionEntries: Array.isArray(parsedState.reflectionEntries)
+        ? parsedState.reflectionEntries.filter(
+            (entry) =>
+              entry &&
+              typeof entry.id === "string" &&
+              typeof entry.themeId === "string" &&
+              typeof entry.text === "string",
+          )
+        : [],
       selectedThemeIds: Array.isArray(parsedState.selectedThemeIds)
         ? parsedState.selectedThemeIds
         : [],
@@ -63,11 +93,22 @@ function ThemeTone({ theme }) {
   return presentationToneCardClasses[theme.color] || presentationToneCardClasses.lavender;
 }
 
-function SegmentedTabs({ activeTab, onChange }) {
+function SegmentedTabs({
+  activeTab,
+  onChange,
+  prioritizationEnabled,
+  discussionsEnabled,
+}) {
   const tabs = [
-    { id: "prioritization", label: "Prioritization", icon: ListChecks },
     { id: "insights", label: "Read Up", icon: Layers3 },
+    ...(prioritizationEnabled
+      ? [{ id: "prioritization", label: "Prioritization", icon: ListChecks }]
+      : []),
   ];
+
+  if (discussionsEnabled) {
+    tabs.push({ id: "reflection", label: "Discussions", icon: MessageSquareText });
+  }
 
   return (
     <div
@@ -101,7 +142,7 @@ function SegmentedTabs({ activeTab, onChange }) {
   );
 }
 
-function JoinScreen({ session }) {
+function JoinScreen({ session, prioritizationEnabled }) {
   return (
     <main className="relative min-h-screen overflow-hidden px-5 py-10">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -123,11 +164,20 @@ function JoinScreen({ session }) {
             {session.goal}
           </h1>
           <p className={`mt-4 text-sm leading-relaxed ${ui.textMuted}`}>
-            Review the live prompt, pick your themes, and submit your vote. Tap
-            {" "}
-            <span className="font-semibold text-[var(--presentation-text)]">Join session</span>
-            {" "}
-            to begin.
+            {prioritizationEnabled
+              ? (
+                <>
+                  Review the live prompt, pick your themes, and add your breakout takeaway in Discussions. Tap{" "}
+                  <span className="font-semibold text-[var(--presentation-text)]">Join</span>{" "}
+                  to begin.
+                </>
+              ) : (
+                <>
+                  Explore the canvas themes and add your breakout takeaway in Discussions. Tap{" "}
+                  <span className="font-semibold text-[var(--presentation-text)]">Join</span>{" "}
+                  to continue.
+                </>
+              )}
           </p>
         </div>
       </div>
@@ -294,6 +344,103 @@ function InsightsView({ session, activeInsightIndex }) {
   );
 }
 
+function ReflectionView({
+  session,
+  reflectionThemeId,
+  reflectionText,
+  reflectionEntries,
+  onThemeChange,
+  onTextChange,
+  onSubmit,
+}) {
+  return (
+    <div className="space-y-5">
+      <section className={`rounded-[28px] border ${ui.borderStrong} bg-[var(--presentation-surface)] p-5`}>
+        <h2 className={`text-[1.6rem] font-semibold leading-tight ${ui.text}`}>
+          {session.reflectionQuestion}
+        </h2>
+        <p className={`mt-4 text-sm leading-relaxed ${ui.textMuted}`}>
+          Select the theme your breakout group discussed, then share one clear takeaway. You can add more than one response.
+        </p>
+      </section>
+
+      <section className={`rounded-[28px] border ${ui.borderStrong} bg-[var(--presentation-surface)] p-5`}>
+        <label className={`text-sm font-semibold ${ui.text}`} htmlFor="discussion-theme-select">
+          Select a theme
+        </label>
+        <select
+          id="discussion-theme-select"
+          value={reflectionThemeId}
+          onChange={(event) => onThemeChange(event.target.value)}
+          className={`mt-4 h-12 w-full rounded-[18px] px-4 text-sm ${ui.control} ${ui.focusRing}`}
+        >
+          <option value="">Choose a theme</option>
+          {session.themes.map((theme) => (
+            <option key={theme.id} value={theme.id}>
+              {theme.title}
+            </option>
+          ))}
+        </select>
+
+        <label className={`text-sm font-semibold ${ui.text}`} htmlFor="reflection-textarea">
+          <span className="mt-5 block">Main takeaway</span>
+        </label>
+        <textarea
+          id="reflection-textarea"
+          value={reflectionText}
+          onChange={(event) => onTextChange(event.target.value)}
+          rows={6}
+          placeholder="Share the main thing your group wants the wider room to remember."
+          className={`mt-4 w-full resize-none rounded-[24px] px-4 py-4 text-sm leading-relaxed ${ui.control} ${ui.focusRing}`}
+        />
+      </section>
+
+      <button
+        type="button"
+        onClick={onSubmit}
+        disabled={!reflectionThemeId || !reflectionText.trim()}
+        className={`h-12 w-full rounded-full bg-[var(--presentation-text)] text-sm font-semibold text-white transition-opacity ${ui.focusRing} disabled:cursor-not-allowed disabled:opacity-40`}
+      >
+        Add takeaway
+      </button>
+
+      {reflectionEntries.length > 0 && (
+        <section className={`rounded-[28px] border ${ui.borderStrong} bg-[var(--presentation-surface)] p-5`}>
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--presentation-text)] text-white shadow-[0_12px_30px_rgba(31,41,55,0.14)]">
+              <Check size={16} />
+            </div>
+            <div>
+              <p className={`text-sm font-semibold ${ui.text}`}>Your responses</p>
+              <p className={`text-sm ${ui.textMuted}`}>You can keep adding more takeaways.</p>
+            </div>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {reflectionEntries
+              .slice()
+              .reverse()
+              .map((entry) => {
+                const theme =
+                  session.themes.find((item) => item.id === entry.themeId) || session.themes[0];
+
+                return (
+                  <div
+                    key={entry.id}
+                    className={`rounded-[24px] border p-4 ${ThemeTone({ theme })}`}
+                  >
+                    <p className={`text-sm font-semibold ${ui.text}`}>{theme.title}</p>
+                    <p className={`mt-2 text-sm leading-relaxed ${ui.text}`}>“{entry.text}”</p>
+                  </div>
+                );
+              })}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
+
 function InsightsBottomBar({ activeInsightIndex, totalThemes, onPrev, onNext }) {
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--presentation-border)] bg-[color:rgb(255_255_255_/_0.92)] px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur-md">
@@ -329,16 +476,42 @@ function InsightsBottomBar({ activeInsightIndex, totalThemes, onPrev, onNext }) 
 }
 
 export default function ParticipantMobileView({ session }) {
+  const initialMode = getParticipantModeFromSearch(
+    typeof window === "undefined" ? "" : window.location.search,
+  );
+  const [prioritizationEnabled, setPrioritizationEnabled] = React.useState(
+    () => readParticipantAccess(session.sessionId, initialMode).prioritizationEnabled,
+  );
+  const [discussionsEnabled, setDiscussionsEnabled] = React.useState(
+    () => readParticipantAccess(session.sessionId, initialMode).discussionsEnabled,
+  );
   const [state, setState] = React.useState(() =>
     readStoredState(session.sessionId, session.themes.length),
   );
 
   React.useEffect(() => {
+    const fallbackMode = getParticipantModeFromSearch(window.location.search);
+    const access = readParticipantAccess(session.sessionId, fallbackMode);
+    setPrioritizationEnabled(access.prioritizationEnabled);
+    setDiscussionsEnabled(access.discussionsEnabled);
+
+    return subscribeToParticipantAccess(session.sessionId, (nextAccess) => {
+      setPrioritizationEnabled(nextAccess.prioritizationEnabled);
+      setDiscussionsEnabled(nextAccess.discussionsEnabled);
+    });
+  }, [session.sessionId]);
+
+  React.useEffect(() => {
     setState((currentState) => ({
       ...readStoredState(session.sessionId, session.themes.length),
-      activeTab: currentState.activeTab,
+      activeTab:
+        currentState.activeTab === "prioritization" && !prioritizationEnabled
+          ? "insights"
+          : currentState.activeTab === "reflection" && !discussionsEnabled
+            ? "insights"
+            : currentState.activeTab,
     }));
-  }, [session.sessionId, session.themes.length]);
+  }, [discussionsEnabled, prioritizationEnabled, session.sessionId, session.themes.length]);
 
   React.useEffect(() => {
     window.sessionStorage.setItem(getStorageKey(session.sessionId), JSON.stringify(state));
@@ -395,10 +568,43 @@ export default function ParticipantMobileView({ session }) {
     }));
   };
 
+  const handleSubmitReflection = () => {
+    const text = state.reflectionText.trim();
+
+    if (!state.reflectionThemeId || !text) {
+      return;
+    }
+
+    const reflectionId = createBreakoutReflectionId();
+
+    upsertBreakoutReflection(session.sessionId, {
+      id: reflectionId,
+      themeId: state.reflectionThemeId,
+      text,
+      createdAt: Date.now(),
+    });
+
+    setState((currentState) => ({
+      ...currentState,
+      reflectionText: "",
+      reflectionEntries: [
+        ...currentState.reflectionEntries,
+        {
+          id: reflectionId,
+          themeId: currentState.reflectionThemeId,
+          text,
+        },
+      ],
+    }));
+  };
+
   if (!state.hasJoined) {
     return (
       <div className={`${presentationTheme.classes.pageShell} min-h-screen font-['DM_Sans']`}>
-        <JoinScreen session={session} />
+        <JoinScreen
+          session={session}
+          prioritizationEnabled={prioritizationEnabled}
+        />
         <div className="fixed inset-x-0 bottom-0 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           <div className="mx-auto w-full max-w-md">
             <button
@@ -406,7 +612,7 @@ export default function ParticipantMobileView({ session }) {
               onClick={handleJoin}
               className={`h-12 w-full rounded-full bg-[var(--presentation-text)] text-sm font-semibold text-white shadow-[0_16px_40px_rgba(31,41,55,0.18)] ${ui.focusRing}`}
             >
-              Join session
+              Join
             </button>
           </div>
         </div>
@@ -416,33 +622,53 @@ export default function ParticipantMobileView({ session }) {
 
   return (
     <div className={`${presentationTheme.classes.pageShell} min-h-screen font-['DM_Sans']`}>
-      {!state.hasSubmitted && (
-        <header className="sticky top-0 z-30 border-b border-[var(--presentation-border)] bg-[color:rgb(252_252_248_/_0.92)] px-4 pb-2.5 pt-2.5 backdrop-blur-md">
-          <div className="mx-auto max-w-md">
-            <SegmentedTabs
-              activeTab={state.activeTab}
-              onChange={(tab) =>
-                setState((currentState) => ({
-                  ...currentState,
-                  activeTab: tab,
-                }))
-              }
-            />
-          </div>
-        </header>
-      )}
+      <header className="sticky top-0 z-30 border-b border-[var(--presentation-border)] bg-[color:rgb(252_252_248_/_0.92)] px-4 pb-2.5 pt-2.5 backdrop-blur-md">
+        <div className="mx-auto max-w-md">
+          <SegmentedTabs
+            activeTab={state.activeTab}
+            prioritizationEnabled={prioritizationEnabled}
+            discussionsEnabled={discussionsEnabled}
+            onChange={(tab) =>
+              setState((currentState) => ({
+                ...currentState,
+                activeTab: tab,
+              }))
+            }
+          />
+        </div>
+      </header>
 
-      <main className={`mx-auto max-w-md px-4 py-5 ${state.activeTab === "insights" && !state.hasSubmitted ? "pb-28" : "pb-8"}`}>
-        {state.activeTab === "prioritization" && state.hasSubmitted ? (
+      <main className={`mx-auto max-w-md px-4 py-5 ${state.activeTab === "insights" ? "pb-28" : "pb-8"}`}>
+        {prioritizationEnabled && state.activeTab === "prioritization" && state.hasSubmitted ? (
           <ConfirmationView
             selectedThemes={selectedThemes}
           />
-        ) : state.activeTab === "prioritization" ? (
+        ) : prioritizationEnabled && state.activeTab === "prioritization" ? (
           <PrioritizationView
             session={session}
             selectedThemeIds={state.selectedThemeIds}
             onToggleSelection={handleToggleSelection}
             onSubmit={handleSubmit}
+          />
+        ) : discussionsEnabled && state.activeTab === "reflection" ? (
+          <ReflectionView
+            session={session}
+            reflectionThemeId={state.reflectionThemeId}
+            reflectionText={state.reflectionText}
+            reflectionEntries={state.reflectionEntries}
+            onThemeChange={(themeId) =>
+              setState((currentState) => ({
+                ...currentState,
+                reflectionThemeId: themeId,
+              }))
+            }
+            onTextChange={(text) =>
+              setState((currentState) => ({
+                ...currentState,
+                reflectionText: text,
+              }))
+            }
+            onSubmit={handleSubmitReflection}
           />
         ) : (
           <InsightsView
@@ -452,7 +678,7 @@ export default function ParticipantMobileView({ session }) {
         )}
       </main>
 
-      {state.activeTab === "insights" && !state.hasSubmitted && (
+      {state.activeTab === "insights" && (
         <InsightsBottomBar
           activeInsightIndex={activeInsightIndex}
           totalThemes={session.themes.length}

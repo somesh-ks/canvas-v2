@@ -10,6 +10,7 @@ export default function ShareParticipantModal({
   onClose,
   participantLink,
   votingEnabled,
+  discussionsEnabled,
 }) {
   const [isCopied, setIsCopied] = useState(false);
   const modalRef = useRef(null);
@@ -66,9 +67,13 @@ export default function ShareParticipantModal({
           <div>
             <h2 className={`text-xl font-semibold ${ui.text}`}>Share with participants</h2>
             <p className={`text-sm ${ui.textMuted} mt-1`}>
-              {votingEnabled
-                ? "Participants can open the canvas, review the information, and join prioritization."
-                : "Participants can open the canvas and review the information. Prioritization appears when it is enabled."}
+              {votingEnabled && discussionsEnabled
+                ? "Participants can review the canvas, join prioritization, and add breakout takeaways in Discussions."
+                : votingEnabled
+                  ? "Participants can open the canvas, review the information, and join prioritization."
+                  : discussionsEnabled
+                    ? "Participants can review the canvas and add breakout takeaways in Discussions."
+                    : "Participants can open the canvas and review the information. Prioritization and Discussions appear when enabled."}
             </p>
           </div>
           <button
