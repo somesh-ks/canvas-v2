@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Download } from "lucide-react";
 import { TopBar, BottomBar } from "../components/Shell";
+import ShareParticipantModal from "../components/ShareParticipantModal";
 import ParticipantMobileView from "../components/ParticipantMobileView";
 import OverviewSlide from "../components/slides/OverviewSlide";
 import QuestionsSlide from "../components/slides/QuestionsSlide";
@@ -24,6 +25,10 @@ import {
 } from "../lib/presentationInsights";
 import { getParticipantPath, getPathForRoute, parseAppRoute } from "../lib/appRoutes";
 import { createParticipantSessionModel } from "../lib/participantSession";
+
+const PUBLIC_APP_ORIGIN = (
+  import.meta.env.VITE_PUBLIC_APP_ORIGIN ?? "https://canvas-v2-can.vercel.app"
+).replace(/\/$/, "");
 
 function parseMetricNumber(value, fallback = 124) {
   const parsed = Number(String(value ?? "").replace(/[^0-9]/g, ""));
@@ -478,6 +483,7 @@ export default function PresentationPage() {
   const [votingEnabled, setVotingEnabled] = useState(false);
   const [votingSession, setVotingSession] = useState(() => createVotingSession(initialData));
   const [showDeleteVotingResultsConfirm, setShowDeleteVotingResultsConfirm] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [actionState, setActionState] = useState({});
   const [route, setRoute] = useState(() => parseAppRoute(window.location.pathname));
 
@@ -493,7 +499,7 @@ export default function PresentationPage() {
     () => getParticipantPath(participantSession.sessionId),
     [participantSession.sessionId],
   );
-  const participantShareLink = `${window.location.origin}${participantPath}`;
+  const participantShareLink = `${PUBLIC_APP_ORIGIN}${participantPath}`;
   const activeView = route.kind === "report" ? "report" : "canvas";
   const openParticipantPreview = React.useCallback(() => {
     const previewWindow = window.open(
@@ -538,6 +544,7 @@ export default function PresentationPage() {
             onVotingSessionChange={setVotingSession}
             participantJoinUrl={participantShareLink}
             onOpenParticipantPreview={openParticipantPreview}
+            onOpenShareModal={() => setIsShareModalOpen(true)}
           />
         ),
       });
@@ -597,9 +604,6 @@ export default function PresentationPage() {
   const currentSlideIndex = slides.findIndex((slide) => slide.id === currentSlideId);
   const safeCurrentSlideIndex = currentSlideIndex >= 0 ? currentSlideIndex : 0;
   const activeSlide = slides[safeCurrentSlideIndex];
-
-  const canvasShareLink = `${window.location.origin}/canvas`;
-  const reportShareLink = `${window.location.origin}/report`;
 
   const syncPathForView = React.useCallback((view, push = true) => {
     const targetPath = getPathForRoute({ kind: view === "report" ? "report" : "canvas" });
@@ -768,10 +772,16 @@ export default function PresentationPage() {
           title={presentationData.title}
           activeView={activeView}
           onViewChange={handleViewChange}
-          canvasLink={canvasShareLink}
-          reportLink={reportShareLink}
+          onOpenShareModal={() => setIsShareModalOpen(true)}
         />
       )}
+
+      <ShareParticipantModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        participantLink={participantShareLink}
+        votingEnabled={votingEnabled}
+      />
 
       {activeView === "canvas" ? (
         <>

@@ -5,9 +5,6 @@ import {
   ChevronDown,
   Check,
   Maximize,
-  Copy,
-  Share2,
-  X,
 } from "lucide-react";
 import { presentationTheme } from "../lib/presentationTheme";
 
@@ -17,50 +14,8 @@ export const TopBar = ({
   title,
   activeView,
   onViewChange,
-  canvasLink,
-  reportLink,
+  onOpenShareModal,
 }) => {
-  const [isShareOpen, setIsShareOpen] = useState(false);
-  const [shareView, setShareView] = useState(activeView === "report" ? "report" : "canvas");
-  const [copiedTarget, setCopiedTarget] = useState(null);
-  const modalRef = useRef(null);
-
-  useEffect(() => {
-    if (!isShareOpen) {
-      setShareView(activeView === "report" ? "report" : "canvas");
-      setCopiedTarget(null);
-    }
-  }, [activeView, isShareOpen]);
-
-  useEffect(() => {
-    const handleEscape = (event) => {
-      if (event.key === "Escape") {
-        setIsShareOpen(false);
-      }
-    };
-
-    if (isShareOpen) {
-      window.addEventListener("keydown", handleEscape);
-    }
-
-    return () => {
-      window.removeEventListener("keydown", handleEscape);
-    };
-  }, [isShareOpen]);
-
-  const activeShareLink = shareView === "report" ? reportLink : canvasLink;
-  const activeShareLabel = shareView === "report" ? "Report link" : "Canvas link";
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(activeShareLink);
-      setCopiedTarget(shareView);
-      setTimeout(() => setCopiedTarget(null), 2000);
-    } catch {
-      setCopiedTarget(null);
-    }
-  };
-
   return (
     <>
       <div
@@ -102,96 +57,88 @@ export const TopBar = ({
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => setIsShareOpen(true)}
+            onClick={onOpenShareModal}
             className={`h-10 px-5 rounded-full flex items-center text-sm font-semibold bg-[var(--presentation-text)] text-white hover:opacity-90 transition-opacity ${ui.focusRing}`}
           >
-            Share
+            Share participant link
           </button>
         </div>
       </div>
 
-      {isShareOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-[120] bg-[var(--presentation-overlay)] backdrop-blur-xl flex items-center justify-center p-6"
-          onClick={() => setIsShareOpen(false)}
-        >
+      {/*
+        Legacy inline share modal retained for reference after extraction to
+        ShareParticipantModal.jsx.
+
+        {isShareOpen && (
           <div
-            ref={modalRef}
-            className={`${ui.panelStrong} w-full max-w-xl rounded-[28px] p-6 shadow-[0_28px_80px_rgba(31,41,55,0.2)]`}
-            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            className="fixed inset-0 z-[120] bg-[var(--presentation-overlay)] backdrop-blur-xl flex items-center justify-center p-6"
+            onClick={() => setIsShareOpen(false)}
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className={`text-xl font-semibold ${ui.text}`}>Share</h2>
-                <p className={`text-sm ${ui.textMuted} mt-1`}>
-                  Choose what you want to share.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsShareOpen(false)}
-                className={`h-9 w-9 rounded-full border ${ui.border} ${ui.controlHover} ${ui.focusRing} flex items-center justify-center ${ui.textMuted}`}
-                aria-label="Close share modal"
-              >
-                <X size={16} />
-              </button>
-            </div>
-
             <div
-              className={`mt-6 h-11 p-1 rounded-full border ${ui.borderStrong} bg-[var(--presentation-surface-elevated)] flex items-center`}
-              role="tablist"
-              aria-label="Share type selector"
+              ref={modalRef}
+              className={`${ui.panelStrong} w-full max-w-xl rounded-[28px] p-6 shadow-[0_28px_80px_rgba(31,41,55,0.2)]`}
+              onClick={(event) => event.stopPropagation()}
             >
-              {[
-                { id: "canvas", label: "Canvas" },
-                { id: "report", label: "Report" },
-              ].map((option) => {
-                const isActive = shareView === option.id;
-                return (
-                  <button
-                    key={option.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={isActive}
-                    onClick={() => setShareView(option.id)}
-                    className={`h-9 flex-1 rounded-full text-sm font-medium transition-all ${ui.focusRing} ${
-                      isActive
-                        ? "bg-[var(--presentation-text)] text-white"
-                        : `${ui.textMuted} hover:text-[var(--presentation-text)]`
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="mt-5">
-              <label className={`block text-sm font-medium ${ui.text} mb-2`}>
-                {activeShareLabel}
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  readOnly
-                  value={activeShareLink}
-                  className={`h-11 flex-1 rounded-xl px-3 text-sm ${ui.text} bg-[var(--presentation-surface-elevated)] border ${ui.border} focus:outline-none`}
-                />
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className={`text-xl font-semibold ${ui.text}`}>Share with participants</h2>
+                  <p className={`text-sm ${ui.textMuted} mt-1`}>
+                    {votingEnabled
+                      ? "Participants can open the canvas, review the information, and join prioritization."
+                      : "Participants can open the canvas and review the information. Prioritization appears when it is enabled."}
+                  </p>
+                </div>
                 <button
                   type="button"
-                  onClick={handleCopy}
-                  className={`h-11 px-4 rounded-xl border ${ui.border} ${ui.controlHover} ${ui.focusRing} flex items-center gap-2 text-sm font-medium ${ui.text}`}
+                  onClick={() => setIsShareOpen(false)}
+                  className={`h-9 w-9 rounded-full border ${ui.border} ${ui.controlHover} ${ui.focusRing} flex items-center justify-center ${ui.textMuted}`}
+                  aria-label="Close share modal"
                 >
-                  {copiedTarget === shareView ? <Check size={16} /> : <Copy size={16} />}
-                  {copiedTarget === shareView ? "Copied" : "Copy"}
+                  <X size={16} />
                 </button>
+              </div>
+
+              <div className="mt-6 space-y-5">
+                <div className="flex flex-col items-center gap-3">
+                  <ShareQrCode
+                    value={participantLink}
+                    alt="Participant join QR code"
+                    size={188}
+                    className="mx-auto"
+                  />
+                  <p className={`max-w-[26rem] text-xs text-center leading-5 ${ui.textSoft}`}>
+                    Scan to open this canvas on mobile and participate when prioritization is enabled.
+                  </p>
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium ${ui.text} mb-2`}>
+                    Participant link
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={participantLink}
+                      className={`h-11 flex-1 rounded-xl px-3 text-sm ${ui.text} bg-[var(--presentation-surface-elevated)] border ${ui.border} focus:outline-none`}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleCopy}
+                      className={`h-11 px-4 rounded-xl border ${ui.border} ${ui.controlHover} ${ui.focusRing} flex items-center gap-2 text-sm font-medium ${ui.text}`}
+                    >
+                      {isCopied ? <Check size={16} /> : <Copy size={16} />}
+                      {isCopied ? "Copied" : "Copy link"}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      */}
     </>
   );
 };

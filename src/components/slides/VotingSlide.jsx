@@ -11,6 +11,7 @@ import {
   Users,
 } from "lucide-react";
 import { presentationTheme } from "../../lib/presentationTheme";
+import ShareQrCode from "../ShareQrCode";
 
 const ui = presentationTheme.classes;
 const RESULT_BAR_BASE_PERCENT = 12;
@@ -30,6 +31,7 @@ export default function VotingSlide({
   onVotingSessionChange,
   participantJoinUrl,
   onOpenParticipantPreview,
+  onOpenShareModal,
 }) {
   const { goal, themes, metrics, voting } = presentationData;
   const { phase, question, votesPerPerson, participantsJoined, participantsCompleted, voteCounts } =
@@ -43,7 +45,13 @@ export default function VotingSlide({
   const initialVoteCounts = Object.fromEntries(themes.map((theme) => [theme.id, theme.count]));
 
   const [isQrOverlayOpen, setIsQrOverlayOpen] = useState(false);
-  const [openThemes, setOpenThemes] = useState({});
+  const [openThemes, setOpenThemes] = useState(() => {
+    const initialOpen = {};
+    if (themes.length > 0) {
+      initialOpen[themes[0].id] = true;
+    }
+    return initialOpen;
+  });
   const [themeAnnotations, setThemeAnnotations] = useState({});
 
   const toggleTheme = (id) =>
@@ -186,12 +194,14 @@ export default function VotingSlide({
 
                 <div className={`${ui.mutedPanel} rounded-xl p-4 space-y-4`}>
                   <div className="space-y-3">
-                    <div className="space-y-1">
-                      <p className={`text-sm font-medium ${ui.textMuted}`}>Join url</p>
-                      <p className={`text-base md:text-lg font-medium ${ui.text}`}>
-                        {participantJoinUrl}
-                      </p>
-                    </div>
+                    {/*
+                      <div className="space-y-1">
+                        <p className={`text-sm font-medium ${ui.textMuted}`}>Join url</p>
+                        <p className={`text-base md:text-lg font-medium ${ui.text}`}>
+                          {participantJoinUrl}
+                        </p>
+                      </div>
+                    */}
                     <button
                       type="button"
                       onClick={onOpenParticipantPreview}
@@ -208,6 +218,13 @@ export default function VotingSlide({
                     >
                       <QrCode size={18} />
                       Show QR
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onOpenShareModal}
+                      className={`w-full h-12 rounded-2xl border ${ui.border} ${ui.controlHover} ${ui.focusRing} flex items-center justify-center gap-3 text-sm font-semibold ${ui.text}`}
+                    >
+                      Share participant link
                     </button>
                   </div>
                 </div>
@@ -320,15 +337,12 @@ export default function VotingSlide({
             <div className="space-y-4 pb-4">
               <div className="flex items-center gap-2">
                 <BarChart3 size={16} className={ui.textMuted} />
-                <h3 className={`text-2xl font-semibold ${ui.text}`}>Prioritization analysis</h3>
+                <h3 className={`text-2xl font-semibold ${ui.text}`}>Results</h3>
               </div>
               <div className={`border-t ${ui.border}`} />
             </div>
 
             <div className="space-y-6">
-              <div className={`${ui.mutedPanel} rounded-2xl p-4`}>
-                <p className={`text-base ${ui.text}`}>{goal}</p>
-              </div>
               <h3 className={`text-[1.9rem] font-medium leading-tight ${ui.text}`}>{question}</h3>
 
               <div className="space-y-4">
@@ -453,9 +467,11 @@ export default function VotingSlide({
               </button>
             </div>
             <div className="rounded-2xl border border-[var(--presentation-border)] bg-[var(--presentation-surface)] p-6 flex items-center justify-center">
-              <div className="h-52 w-52 rounded-2xl border border-[var(--presentation-border-strong)] bg-[var(--presentation-surface-elevated)] flex items-center justify-center">
-                <QrCode className={ui.textMuted} size={132} />
-              </div>
+              <ShareQrCode
+                value={participantJoinUrl}
+                alt="Participant join QR code"
+                size={208}
+              />
             </div>
             <div className={`${ui.mutedPanel} rounded-xl p-4 space-y-2`}>
               <p className={`text-sm font-medium ${ui.textMuted}`}>Join url</p>
