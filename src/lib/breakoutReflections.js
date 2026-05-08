@@ -11,17 +11,19 @@ function sanitizeReflection(reflection) {
   }
 
   const id = typeof reflection.id === "string" ? reflection.id : "";
+  const mode = reflection.mode === "open" ? "open" : "theme";
   const themeId = typeof reflection.themeId === "string" ? reflection.themeId : "";
   const text = typeof reflection.text === "string" ? reflection.text.trim() : "";
   const createdAt = Number(reflection.createdAt) || Date.now();
 
-  if (!id || !themeId || !text) {
+  if (!id || !text || (mode === "theme" && !themeId)) {
     return null;
   }
 
   return {
     id,
-    themeId,
+    mode,
+    themeId: mode === "theme" ? themeId : "",
     text,
     createdAt,
   };

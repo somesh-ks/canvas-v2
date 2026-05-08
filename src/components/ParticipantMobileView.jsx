@@ -14,6 +14,8 @@ import {
 } from "../lib/presentationTheme";
 import {
   getParticipantModeFromSearch,
+  getParticipantDiscussionVariantFromSearch,
+  hasParticipantDiscussionVariantInSearch,
   readParticipantAccess,
   subscribeToParticipantAccess,
 } from "../lib/participantAccess";
@@ -76,9 +78,20 @@ function readStoredState(sessionId, themeCount) {
             (entry) =>
               entry &&
               typeof entry.id === "string" &&
-              typeof entry.themeId === "string" &&
-              typeof entry.text === "string",
+              typeof entry.text === "string" &&
+              (entry.mode === "open" || typeof entry.themeId === "string"),
           )
+          .map((entry) => ({
+            id: entry.id,
+            mode: entry.mode === "open" ? "open" : "theme",
+            themeId:
+              entry.mode === "open"
+                ? ""
+                : typeof entry.themeId === "string"
+                  ? entry.themeId
+                  : "",
+            text: entry.text,
+          }))
         : [],
       selectedThemeIds: Array.isArray(parsedState.selectedThemeIds)
         ? parsedState.selectedThemeIds
@@ -441,6 +454,78 @@ function ReflectionView({
   );
 }
 
+function OpenReflectionView({
+  session,
+  reflectionText,
+  reflectionEntries,
+  onTextChange,
+  onSubmit,
+}) {
+  return (
+    <div className="space-y-5">
+      <section className={`rounded-[28px] border ${ui.borderStrong} bg-[var(--presentation-surface)] p-5`}>
+        <h2 className={`text-[1.6rem] font-semibold leading-tight ${ui.text}`}>
+          {session.openReflectionQuestion}
+        </h2>
+        <p className={`mt-4 text-sm leading-relaxed ${ui.textMuted}`}>
+          Write one takeaway at a time and keep adding more if the discussion surfaces another point.
+        </p>
+      </section>
+
+      <section className={`rounded-[28px] border ${ui.borderStrong} bg-[var(--presentation-surface)] p-5`}>
+        <label className={`text-sm font-semibold ${ui.text}`} htmlFor="open-reflection-textarea">
+          <span className="block">Takeaway</span>
+        </label>
+        <textarea
+          id="open-reflection-textarea"
+          value={reflectionText}
+          onChange={(event) => onTextChange(event.target.value)}
+          rows={6}
+          placeholder="Share one clear takeaway from the conversation."
+          className={`mt-4 w-full resize-none rounded-[24px] px-4 py-4 text-sm leading-relaxed ${ui.control} ${ui.focusRing}`}
+        />
+      </section>
+
+      <button
+        type="button"
+        onClick={onSubmit}
+        disabled={!reflectionText.trim()}
+        className={`h-12 w-full rounded-full bg-[var(--presentation-text)] text-sm font-semibold text-white transition-opacity ${ui.focusRing} disabled:cursor-not-allowed disabled:opacity-40`}
+      >
+        Add takeaway
+      </button>
+
+      {reflectionEntries.length > 0 && (
+        <section className={`rounded-[28px] border ${ui.borderStrong} bg-[var(--presentation-surface)] p-5`}>
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--presentation-text)] text-white shadow-[0_12px_30px_rgba(31,41,55,0.14)]">
+              <Check size={16} />
+            </div>
+            <div>
+              <p className={`text-sm font-semibold ${ui.text}`}>Your responses</p>
+              <p className={`text-sm ${ui.textMuted}`}>You can keep adding more takeaways.</p>
+            </div>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {reflectionEntries
+              .slice()
+              .reverse()
+              .map((entry) => (
+                <div
+                  key={entry.id}
+                  className={`rounded-[24px] border p-4 ${ui.surfaceElevated}`}
+                >
+                  <p className={`text-sm leading-relaxed ${ui.text}`}>“{entry.text}”</p>
+                </div>
+              ))}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
+
 function InsightsBottomBar({ activeInsightIndex, totalThemes, onPrev, onNext }) {
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--presentation-border)] bg-[color:rgb(255_255_255_/_0.92)] px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur-md">
@@ -479,25 +564,64 @@ export default function ParticipantMobileView({ session }) {
   const initialMode = getParticipantModeFromSearch(
     typeof window === "undefined" ? "" : window.location.search,
   );
+  const initialDiscussionVariant = getParticipantDiscussionVariantFromSearch(
+    typeof window === "undefined" ? "" : window.location.search,
+  );
+  const hasInitialDiscussionParam = hasParticipantDiscussionVariantInSearch(
+    typeof window === "undefined" ? "" : window.location.search,
+  );
   const [prioritizationEnabled, setPrioritizationEnabled] = React.useState(
-    () => readParticipantAccess(session.sessionId, initialMode).prioritizationEnabled,
+    () =>
+      readParticipantAccess(
+        session.sessionId,
+        initialMode,
+        initialDiscussionVariant,
+        hasInitialDiscussionParam,
+      ).prioritizationEnabled,
   );
   const [discussionsEnabled, setDiscussionsEnabled] = React.useState(
-    () => readParticipantAccess(session.sessionId, initialMode).discussionsEnabled,
+    () =>
+      readParticipantAccess(
+        session.sessionId,
+        initialMode,
+        initialDiscussionVariant,
+        hasInitialDiscussionParam,
+      ).discussionsEnabled,
   );
   const [state, setState] = React.useState(() =>
     readStoredState(session.sessionId, session.themes.length),
   );
+  const [discussionVariant, setDiscussionVariant] = React.useState(initialDiscussionVariant);
 
   React.useEffect(() => {
     const fallbackMode = getParticipantModeFromSearch(window.location.search);
-    const access = readParticipantAccess(session.sessionId, fallbackMode);
+    const fallbackDiscussionVariant = getParticipantDiscussionVariantFromSearch(
+      window.location.search,
+    );
+    const hasDiscussionParam = hasParticipantDiscussionVariantInSearch(
+      window.location.search,
+    );
+    const access = readParticipantAccess(
+      session.sessionId,
+      fallbackMode,
+      fallbackDiscussionVariant,
+      hasDiscussionParam,
+    );
     setPrioritizationEnabled(access.prioritizationEnabled);
     setDiscussionsEnabled(access.discussionsEnabled);
+    setDiscussionVariant(access.discussionVariant);
 
-    return subscribeToParticipantAccess(session.sessionId, (nextAccess) => {
+    return subscribeToParticipantAccess(session.sessionId, () => {
+      const nextAccess = readParticipantAccess(
+        session.sessionId,
+        fallbackMode,
+        fallbackDiscussionVariant,
+        hasDiscussionParam,
+      );
+
       setPrioritizationEnabled(nextAccess.prioritizationEnabled);
       setDiscussionsEnabled(nextAccess.discussionsEnabled);
+      setDiscussionVariant(nextAccess.discussionVariant || fallbackDiscussionVariant);
     });
   }, [session.sessionId]);
 
@@ -571,18 +695,29 @@ export default function ParticipantMobileView({ session }) {
   const handleSubmitReflection = () => {
     const text = state.reflectionText.trim();
 
-    if (!state.reflectionThemeId || !text) {
+    if (!text || (discussionVariant !== "open" && !state.reflectionThemeId)) {
       return;
     }
 
     const reflectionId = createBreakoutReflectionId();
 
-    upsertBreakoutReflection(session.sessionId, {
-      id: reflectionId,
-      themeId: state.reflectionThemeId,
-      text,
-      createdAt: Date.now(),
-    });
+    const reflectionPayload =
+      discussionVariant === "open"
+        ? {
+            id: reflectionId,
+            mode: "open",
+            text,
+            createdAt: Date.now(),
+          }
+        : {
+            id: reflectionId,
+            mode: "theme",
+            themeId: state.reflectionThemeId,
+            text,
+            createdAt: Date.now(),
+          };
+
+    upsertBreakoutReflection(session.sessionId, reflectionPayload);
 
     setState((currentState) => ({
       ...currentState,
@@ -591,7 +726,8 @@ export default function ParticipantMobileView({ session }) {
         ...currentState.reflectionEntries,
         {
           id: reflectionId,
-          themeId: currentState.reflectionThemeId,
+          mode: discussionVariant,
+          themeId: discussionVariant === "open" ? "" : currentState.reflectionThemeId,
           text,
         },
       ],
@@ -651,25 +787,40 @@ export default function ParticipantMobileView({ session }) {
             onSubmit={handleSubmit}
           />
         ) : discussionsEnabled && state.activeTab === "reflection" ? (
-          <ReflectionView
-            session={session}
-            reflectionThemeId={state.reflectionThemeId}
-            reflectionText={state.reflectionText}
-            reflectionEntries={state.reflectionEntries}
-            onThemeChange={(themeId) =>
-              setState((currentState) => ({
-                ...currentState,
-                reflectionThemeId: themeId,
-              }))
-            }
-            onTextChange={(text) =>
-              setState((currentState) => ({
-                ...currentState,
-                reflectionText: text,
-              }))
-            }
-            onSubmit={handleSubmitReflection}
-          />
+          discussionVariant === "open" ? (
+            <OpenReflectionView
+              session={session}
+              reflectionText={state.reflectionText}
+              reflectionEntries={state.reflectionEntries.filter((entry) => entry.mode === "open")}
+              onTextChange={(text) =>
+                setState((currentState) => ({
+                  ...currentState,
+                  reflectionText: text,
+                }))
+              }
+              onSubmit={handleSubmitReflection}
+            />
+          ) : (
+            <ReflectionView
+              session={session}
+              reflectionThemeId={state.reflectionThemeId}
+              reflectionText={state.reflectionText}
+              reflectionEntries={state.reflectionEntries.filter((entry) => entry.mode !== "open")}
+              onThemeChange={(themeId) =>
+                setState((currentState) => ({
+                  ...currentState,
+                  reflectionThemeId: themeId,
+                }))
+              }
+              onTextChange={(text) =>
+                setState((currentState) => ({
+                  ...currentState,
+                  reflectionText: text,
+                }))
+              }
+              onSubmit={handleSubmitReflection}
+            />
+          )
         ) : (
           <InsightsView
             session={session}

@@ -11,6 +11,7 @@ export function createParticipantSessionModel(presentationData) {
     joinCode: presentationData.voting.joinCode,
     question: presentationData.voting.question,
     reflectionQuestion: "What is your main takeaway from this discussion?",
+    openReflectionQuestion: "What is one takeaway you want others to hear?",
     votesPerPerson: presentationData.voting.votesPerPerson,
     themes: presentationData.themes.map((theme) => ({
       id: theme.id,

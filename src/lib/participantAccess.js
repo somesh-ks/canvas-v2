@@ -9,11 +9,26 @@ export function getParticipantModeFromSearch(search) {
   return mode === "prioritization" ? "prioritization" : "readup";
 }
 
-export function readParticipantAccess(sessionId, fallbackMode = "readup") {
+export function getParticipantDiscussionVariantFromSearch(search) {
+  const discussionVariant = new URLSearchParams(search).get("discussion");
+  return discussionVariant === "open" ? "open" : "theme";
+}
+
+export function hasParticipantDiscussionVariantInSearch(search) {
+  return new URLSearchParams(search).has("discussion");
+}
+
+export function readParticipantAccess(
+  sessionId,
+  fallbackMode = "readup",
+  fallbackDiscussionVariant = "theme",
+  hasDiscussionParam = false,
+) {
   if (typeof window === "undefined") {
     return {
       prioritizationEnabled: fallbackMode === "prioritization",
-      discussionsEnabled: false,
+      discussionsEnabled: hasDiscussionParam,
+      discussionVariant: fallbackDiscussionVariant,
     };
   }
 
@@ -23,19 +38,24 @@ export function readParticipantAccess(sessionId, fallbackMode = "readup") {
     if (!rawValue) {
       return {
         prioritizationEnabled: fallbackMode === "prioritization",
-        discussionsEnabled: false,
+        discussionsEnabled: hasDiscussionParam,
+        discussionVariant: fallbackDiscussionVariant,
       };
     }
 
     const parsedValue = JSON.parse(rawValue);
     return {
       prioritizationEnabled: Boolean(parsedValue?.prioritizationEnabled),
-      discussionsEnabled: Boolean(parsedValue?.discussionsEnabled),
+      discussionsEnabled:
+        hasDiscussionParam || Boolean(parsedValue?.discussionsEnabled),
+      discussionVariant:
+        parsedValue?.discussionVariant === "open" ? "open" : fallbackDiscussionVariant,
     };
   } catch {
     return {
       prioritizationEnabled: fallbackMode === "prioritization",
-      discussionsEnabled: false,
+      discussionsEnabled: hasDiscussionParam,
+      discussionVariant: fallbackDiscussionVariant,
     };
   }
 }
@@ -44,6 +64,7 @@ export function writeParticipantAccess(
   sessionId,
   prioritizationEnabled,
   discussionsEnabled = false,
+  discussionVariant = "theme",
 ) {
   if (typeof window === "undefined") {
     return;
@@ -54,6 +75,7 @@ export function writeParticipantAccess(
     JSON.stringify({
       prioritizationEnabled: Boolean(prioritizationEnabled),
       discussionsEnabled: Boolean(discussionsEnabled),
+      discussionVariant: discussionVariant === "open" ? "open" : "theme",
     }),
   );
 }

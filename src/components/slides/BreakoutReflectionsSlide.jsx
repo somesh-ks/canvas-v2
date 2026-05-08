@@ -15,6 +15,7 @@ import {
 } from "../../lib/presentationTheme";
 
 const ui = presentationTheme.classes;
+const openVariantAccent = presentationAccentClasses.grape;
 
 const synthesisBuckets = [
   {
@@ -64,39 +65,72 @@ const synthesisBuckets = [
 const demoReflections = [
   {
     id: "demo-1",
+    mode: "theme",
     themeId: "t1",
     text: "We need one clearer narrative for why priorities are changing and how teams should respond.",
     createdAt: 1715088600000,
   },
   {
     id: "demo-2",
+    mode: "theme",
     themeId: "t1",
     text: "People want more transparency and a single place to understand roadmap decisions.",
     createdAt: 1715088601000,
   },
   {
     id: "demo-3",
+    mode: "theme",
     themeId: "t2",
     text: "The group kept coming back to focus. We are spread too thin across too many initiatives.",
     createdAt: 1715088602000,
   },
   {
     id: "demo-4",
+    mode: "theme",
     themeId: "t2",
     text: "We need clearer tradeoffs so teams know what to stop, not just what to start.",
     createdAt: 1715088603000,
   },
   {
     id: "demo-5",
+    mode: "theme",
     themeId: "t3",
     text: "Cross-team coordination is rewarding but still too dependent on informal relationships.",
     createdAt: 1715088604000,
   },
   {
     id: "demo-6",
+    mode: "theme",
     themeId: "t3",
     text: "Knowledge sharing needs more structure so collaboration does not depend on who already knows whom.",
     createdAt: 1715088605000,
+  },
+];
+
+const openDemoReflections = [
+  {
+    id: "open-demo-1",
+    mode: "open",
+    text: "We need a clearer story for why the plan is changing and what stays stable.",
+    createdAt: 1715088600000,
+  },
+  {
+    id: "open-demo-2",
+    mode: "open",
+    text: "Teams want fewer handoffs and a simpler path from decision to execution.",
+    createdAt: 1715088601000,
+  },
+  {
+    id: "open-demo-3",
+    mode: "open",
+    text: "The discussion keeps circling back to ownership and who should make the call.",
+    createdAt: 1715088602000,
+  },
+  {
+    id: "open-demo-4",
+    mode: "open",
+    text: "People want a faster feedback loop so the room can adjust before momentum is lost.",
+    createdAt: 1715088603000,
   },
 ];
 
@@ -167,29 +201,44 @@ export default function BreakoutReflectionsSlide({
   onOpenShareModal,
   discussionsEnabled,
   onToggleDiscussions,
+  variant = "theme",
 }) {
   const [statePreview, setStatePreview] = useState("live");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedThemeId, setSelectedThemeId] = useState(
     presentationData.themes[0]?.id || "",
   );
+  const isOpenVariant = variant === "open";
   const activeReflections = useMemo(() => {
     if (statePreview === "zero") {
       return [];
     }
 
     if (statePreview === "filled") {
-      return demoReflections;
+      return isOpenVariant ? openDemoReflections : demoReflections;
     }
 
     return breakoutReflections;
-  }, [breakoutReflections, statePreview]);
+  }, [breakoutReflections, isOpenVariant, statePreview]);
+
+  const themeReflections = useMemo(
+    () => activeReflections.filter((reflection) => reflection.mode !== "open"),
+    [activeReflections],
+  );
+  const openReflections = useMemo(
+    () => activeReflections.filter((reflection) => reflection.mode === "open"),
+    [activeReflections],
+  );
+  const openSynthesis = useMemo(
+    () => buildThemeSynthesis(null, openReflections),
+    [openReflections],
+  );
 
   const themesWithReflections = useMemo(
     () =>
       presentationData.themes
         .map((theme) => {
-          const reflections = activeReflections
+          const reflections = themeReflections
             .filter((reflection) => reflection.themeId === theme.id)
             .sort((a, b) => b.createdAt - a.createdAt);
 
@@ -203,7 +252,7 @@ export default function BreakoutReflectionsSlide({
         })
         .filter(Boolean)
         .sort((a, b) => b.reflections.length - a.reflections.length || b.count - a.count),
-    [activeReflections, presentationData.themes],
+    [presentationData.themes, themeReflections],
   );
 
   const selectedTheme =
@@ -227,6 +276,142 @@ export default function BreakoutReflectionsSlide({
   };
 
   const hasAnyResponses = themesWithReflections.length > 0;
+  const hasOpenResponses = openReflections.length > 0;
+
+  if (isOpenVariant) {
+    return (
+      <div className="max-w-7xl mx-auto px-8 py-16 animate-in fade-in duration-500">
+        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-8 mb-10">
+          <div className="space-y-3 max-w-3xl">
+            <h2 className={`text-3xl font-semibold tracking-tight ${ui.text}`}>
+              Open breakout reflections
+            </h2>
+            <p className={`text-base leading-relaxed ${ui.textMuted}`}>
+              Capture takeaways openly, without tying them to a theme first.
+            </p>
+          </div>
+
+          <div className="flex items-center justify-end gap-3">
+            <div
+              className={`inline-flex p-1 ${ui.surfaceElevated} border ${ui.border} rounded-full`}
+              role="tablist"
+              aria-label="Discussion slide preview states"
+            >
+              {[
+                { id: "live", label: "Live" },
+                { id: "zero", label: "Zero state" },
+                { id: "filled", label: "Filled state" },
+              ].map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={statePreview === option.id}
+                  onClick={() => setStatePreview(option.id)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    statePreview === option.id
+                      ? "bg-[var(--presentation-surface)] shadow-sm text-[var(--presentation-text)]"
+                      : "text-[var(--presentation-text-muted)] hover:text-[var(--presentation-text)]"
+                  } ${ui.focusRing}`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={onToggleDiscussions}
+              className={`h-11 rounded-full px-5 text-sm font-semibold transition-all ${
+                discussionsEnabled
+                  ? `border ${ui.borderStrong} ${ui.surface} ${ui.text} hover:bg-[var(--presentation-surface-muted)]`
+                  : `bg-[var(--presentation-text)] text-white hover:opacity-90`
+              } ${ui.focusRing}`}
+            >
+              {discussionsEnabled ? "Stop discussions" : "Start discussions"}
+            </button>
+          </div>
+        </div>
+
+        {!hasOpenResponses ? (
+          <div className={`${ui.panelStrong} rounded-[32px] p-12 text-center`}>
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[var(--presentation-surface-elevated)]">
+              <Sparkles size={24} className={ui.textMuted} />
+            </div>
+            <h3 className={`mt-6 text-2xl font-semibold ${ui.text}`}>
+              Awaiting open responses
+            </h3>
+            <p className={`mt-3 max-w-2xl mx-auto text-lg leading-relaxed ${ui.textMuted}`}>
+              Share the participant link so people can add takeaways directly from the discussion.
+            </p>
+            <div className="mt-8 flex justify-center">
+              <button
+                type="button"
+                onClick={onOpenShareModal}
+                className={`h-12 rounded-full bg-[var(--presentation-text)] px-6 text-sm font-semibold text-white transition-opacity hover:opacity-90 ${ui.focusRing}`}
+              >
+                Share participant link
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className={`${ui.panelStrong} rounded-[32px] p-8 shadow-soft-sm`}>
+            <div className="space-y-3">
+              <p className={`text-sm font-semibold uppercase tracking-[0.16em] ${ui.textSoft}`}>
+                Takeaways
+              </p>
+              <h3 className={`text-[1.9rem] font-semibold leading-tight ${ui.text}`}>
+                {openSynthesis.headline}
+              </h3>
+              <p className={`text-base ${ui.textMuted}`}>
+                {getSignalLabel(openReflections.length)} across {openReflections.length} takeaways
+              </p>
+            </div>
+
+            <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(260px,0.9fr)]">
+              <div className={`rounded-[28px] border p-5 ${ui.surfaceElevated} ${ui.border}`} >
+                <p className={`text-sm font-semibold uppercase tracking-[0.16em] ${ui.textSoft}`}>
+                  Synthesized insights
+                </p>
+                <div className="mt-4 space-y-3">
+                  {openSynthesis.bullets.slice(0, 3).map((bullet, index) => (
+                    <div key={`open-bullet-${index}`} className="flex gap-3">
+                      <span className={`mt-1.5 h-2.5 w-2.5 flex-shrink-0 rounded-full ${openVariantAccent.soft}`} />
+                      <p className={`text-base leading-relaxed ${ui.text}`}>{bullet}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className={`rounded-[28px] border p-5 ${ui.surfaceElevated} ${ui.border}`}>
+                <div className="flex items-center gap-2">
+                  <MessageSquareQuote size={16} className={ui.textMuted} />
+                  <p className={`text-sm font-semibold uppercase tracking-[0.16em] ${ui.textSoft}`}>
+                    Recent messages
+                  </p>
+                </div>
+                <div className="mt-4 space-y-3">
+                  {openReflections
+                    .slice()
+                    .sort((a, b) => b.createdAt - a.createdAt)
+                    .slice(0, 4)
+                    .map((reflection) => (
+                      <blockquote
+                        key={reflection.id}
+                        className={`rounded-[22px] border px-4 py-4 bg-white/55 ${ui.border}`}
+                      >
+                        <p className={`text-base leading-relaxed ${ui.text}`}>
+                          “{reflection.text}”
+                        </p>
+                      </blockquote>
+                    ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-8 py-16 animate-in fade-in duration-500">
