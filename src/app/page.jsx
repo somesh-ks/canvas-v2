@@ -737,7 +737,7 @@ export default function PresentationPage() {
     if (discussionsEnabled) {
       baseSlides.push({
         id: "breakout-reflections-open",
-        title: "Open Reflections",
+        title: "Open Discussions",
         component: (
           <OpenBreakoutReflectionsSlide
             presentationData={presentationData}

@@ -284,7 +284,7 @@ export default function BreakoutReflectionsSlide({
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-8 mb-10">
           <div className="space-y-3 max-w-3xl">
             <h2 className={`text-3xl font-semibold tracking-tight ${ui.text}`}>
-              Open breakout reflections
+              Open discussions
             </h2>
             <p className={`text-base leading-relaxed ${ui.textMuted}`}>
               Capture takeaways openly, without tying them to a theme first.
@@ -417,8 +417,8 @@ export default function BreakoutReflectionsSlide({
     <div className="max-w-7xl mx-auto px-8 py-16 animate-in fade-in duration-500">
       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-8 mb-10">
         <div className="space-y-3 max-w-3xl">
-          <h2 className={`text-3xl font-semibold tracking-tight ${ui.text}`}>
-            Participant discussions
+            <h2 className={`text-3xl font-semibold tracking-tight ${ui.text}`}>
+            Open discussions
           </h2>
         </div>
 

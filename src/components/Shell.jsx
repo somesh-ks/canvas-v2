@@ -5,10 +5,8 @@ import {
   ChevronDown,
   Check,
   Maximize,
-  ListChecks,
-  MessageSquareText,
-  ClipboardList,
 } from "lucide-react";
+import { Target, Chat, UserCheck } from "@phosphor-icons/react";
 import { presentationTheme } from "../lib/presentationTheme";
 
 const ui = presentationTheme.classes;
@@ -255,7 +253,7 @@ export const BottomBar = ({
     >
       <div className="absolute left-8 flex items-center gap-2">
         <FeatureToggleButton
-          icon={ListChecks}
+          icon={Target}
           label="Prioritization"
           activeClasses="bg-black"
           activeIconClass="text-white"
@@ -272,7 +270,7 @@ export const BottomBar = ({
           ariaLabel="Toggle prioritization"
         />
         <FeatureToggleButton
-          icon={MessageSquareText}
+          icon={Chat}
           label="Discussions"
           activeClasses="bg-black"
           activeIconClass="text-white"
@@ -289,7 +287,7 @@ export const BottomBar = ({
           ariaLabel="Toggle open discussions"
         />
         <FeatureToggleButton
-          icon={ClipboardList}
+          icon={UserCheck}
           label="Action center"
           activeClasses="bg-black"
           activeIconClass="text-white"
