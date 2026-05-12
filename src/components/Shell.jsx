@@ -148,6 +148,7 @@ function FeatureToggleButton({
   icon: Icon,
   label,
   tooltip,
+  tooltipAlign = "center",
   active,
   feedback,
   activeClasses = "",
@@ -158,6 +159,10 @@ function FeatureToggleButton({
 }) {
   const showTooltip = Boolean(feedback) || Boolean(tooltip?.visible);
   const tooltipText = feedback || tooltip?.text || label;
+  const tooltipPositionClass =
+    tooltipAlign === "start"
+      ? "left-0 translate-x-0"
+      : "left-1/2 -translate-x-1/2";
 
   return (
     <button
@@ -186,7 +191,7 @@ function FeatureToggleButton({
         />
       )}
       <span
-        className={`pointer-events-none absolute bottom-full left-1/2 z-50 mb-3 -translate-x-1/2 whitespace-nowrap rounded-full border px-3 py-1.5 text-[11px] font-medium shadow-[0_8px_20px_rgba(31,41,55,0.14)] transition-all duration-150 ${
+        className={`pointer-events-none absolute bottom-full z-50 mb-3 whitespace-nowrap rounded-full border px-3 py-1.5 text-[11px] font-medium shadow-[0_8px_20px_rgba(31,41,55,0.14)] transition-all duration-150 ${tooltipPositionClass} ${
           showTooltip ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1"
         } ${ui.surface} ${ui.border} ${ui.text}`}
       >
@@ -261,6 +266,7 @@ export const BottomBar = ({
             visible: featureHover === "prioritization" || Boolean(featureFeedback.prioritization),
             text: "Prioritization",
           }}
+          tooltipAlign="start"
           active={votingSlideVisible}
           feedback={featureFeedback.prioritization}
           onClick={onToggleVoting}
