@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Download } from "lucide-react";
 import { TopBar, BottomBar } from "../components/Shell";
 import ShareParticipantModal from "../components/ShareParticipantModal";
@@ -14,7 +14,6 @@ import ActionPlanV1Slide from "../components/slides/ActionPlanV1Slide";
 import ActionPlanV2Slide from "../components/slides/ActionPlanV2Slide";
 import ActionPlanV3Slide from "../components/slides/ActionPlanV3Slide";
 import ActionPlanV4Slide from "../components/slides/ActionPlanV4Slide";
-import BreakoutReflectionsSlide from "../components/slides/BreakoutReflectionsSlide";
 import OpenBreakoutReflectionsSlide from "../components/slides/OpenBreakoutReflectionsSlide";
 import ThankYouSlide from "../components/slides/ThankYouSlide";
 import { presentationData as initialData } from "../data/mockData";
@@ -53,8 +52,8 @@ function getParticipantModeQuery(votingEnabled) {
   return votingEnabled ? "mode=prioritization" : "mode=readup";
 }
 
-function getParticipantDiscussionVariant(currentSlideId) {
-  return currentSlideId === "breakout-reflections-open" ? "open" : "theme";
+function getParticipantDiscussionVariant() {
+  return "open";
 }
 
 function parseMetricNumber(value, fallback = 124) {
@@ -509,11 +508,14 @@ export default function PresentationPage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [votingEnabled, setVotingEnabled] = useState(false);
   const [discussionsEnabled, setDiscussionsEnabled] = useState(false);
+  const [actionCenterEnabled, setActionCenterEnabled] = useState(false);
   const [votingSession, setVotingSession] = useState(() => createVotingSession(initialData));
   const [showDeleteVotingResultsConfirm, setShowDeleteVotingResultsConfirm] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [actionState, setActionState] = useState({});
   const [route, setRoute] = useState(() => parseAppRoute(window.location.pathname));
+  const [featureFeedback, setFeatureFeedback] = useState({});
+  const featureFeedbackTimersRef = useRef({});
 
   const handleDownloadReport = () => {
     downloadDetailedReportPdf(presentationData);
@@ -528,7 +530,7 @@ export default function PresentationPage() {
     [participantSession.sessionId],
   );
   const participantModeQuery = getParticipantModeQuery(votingEnabled);
-  const participantDiscussionVariant = getParticipantDiscussionVariant(currentSlideId);
+  const participantDiscussionVariant = getParticipantDiscussionVariant();
   const publicAppOrigin = resolvePublicAppOrigin();
   const participantShareLink = `${publicAppOrigin}${participantPath}?${[
     participantModeQuery,
@@ -540,6 +542,32 @@ export default function PresentationPage() {
   const [breakoutReflections, setBreakoutReflections] = useState(() =>
     readBreakoutReflections(participantSession.sessionId),
   );
+
+  const flashFeatureFeedback = React.useCallback((key, message) => {
+    const existingTimer = featureFeedbackTimersRef.current[key];
+
+    if (existingTimer) {
+      window.clearTimeout(existingTimer);
+    }
+
+    setFeatureFeedback((current) => ({ ...current, [key]: message }));
+
+    const timer = window.setTimeout(() => {
+      setFeatureFeedback((current) => {
+        if (current[key] !== message) {
+          return current;
+        }
+
+        const next = { ...current };
+        delete next[key];
+        return next;
+      });
+      delete featureFeedbackTimersRef.current[key];
+    }, 1400);
+
+    featureFeedbackTimersRef.current[key] = timer;
+  }, []);
+
   const openParticipantPreview = React.useCallback(() => {
     const previewWindow = window.open(
       participantShareLink,
@@ -552,76 +580,142 @@ export default function PresentationPage() {
     }
   }, [participantShareLink]);
 
+  const disableVoting = React.useCallback(() => {
+    setVotingSession(createVotingSession(presentationData));
+
+    if (currentSlideId === "voting") {
+      setCurrentSlideId("results-snapshot");
+    }
+
+    writeParticipantAccess(
+      participantSession.sessionId,
+      false,
+      discussionsEnabled,
+      participantDiscussionVariant,
+    );
+    setVotingEnabled(false);
+    flashFeatureFeedback("prioritization", "Prioritization disabled");
+  }, [
+    currentSlideId,
+    discussionsEnabled,
+    participantDiscussionVariant,
+    participantSession.sessionId,
+    presentationData,
+    flashFeatureFeedback,
+  ]);
+
+  const handleToggleVoting = React.useCallback(() => {
+    if (votingEnabled) {
+      if (votingSession.phase === "results") {
+        setShowDeleteVotingResultsConfirm(true);
+        return;
+      }
+
+      disableVoting();
+      return;
+    }
+
+    setVotingEnabled(true);
+    writeParticipantAccess(
+      participantSession.sessionId,
+      true,
+      discussionsEnabled,
+      participantDiscussionVariant,
+    );
+    flashFeatureFeedback("prioritization", "Prioritization enabled");
+  }, [
+    disableVoting,
+    discussionsEnabled,
+    participantDiscussionVariant,
+    participantSession.sessionId,
+    flashFeatureFeedback,
+    votingEnabled,
+    votingSession.phase,
+  ]);
+
+  const handleToggleDiscussions = React.useCallback(() => {
+    const nextValue = !discussionsEnabled;
+
+    setDiscussionsEnabled(nextValue);
+    writeParticipantAccess(
+      participantSession.sessionId,
+      votingEnabled,
+      nextValue,
+      participantDiscussionVariant,
+    );
+
+    if (nextValue) {
+      flashFeatureFeedback("discussions", "Discussions enabled");
+      return;
+    }
+
+    if (currentSlideId === "breakout-reflections-open") {
+      setCurrentSlideId("theme-details");
+    }
+
+    flashFeatureFeedback("discussions", "Discussions disabled");
+  }, [
+    currentSlideId,
+    discussionsEnabled,
+    participantDiscussionVariant,
+    participantSession.sessionId,
+    flashFeatureFeedback,
+    votingEnabled,
+  ]);
+
+  const handleToggleActionCenter = React.useCallback(() => {
+    const nextValue = !actionCenterEnabled;
+
+    setActionCenterEnabled(nextValue);
+
+    if (nextValue) {
+      flashFeatureFeedback("actionCenter", "Action Center enabled");
+      return;
+    }
+
+    if (currentSlideId === "action-v1") {
+      setCurrentSlideId("results-snapshot");
+    }
+
+    flashFeatureFeedback("actionCenter", "Action Center disabled");
+  }, [actionCenterEnabled, currentSlideId, flashFeatureFeedback]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(featureFeedbackTimersRef.current).forEach((timer) => {
+        window.clearTimeout(timer);
+      });
+    };
+  }, []);
+
   const slides = useMemo(() => {
     const baseSlides = [
       { id: "overview", title: "Overview", component: <OverviewSlide /> },
       { id: "questions", title: "Questions", component: <QuestionsSlide /> },
       { id: "quotes", title: "Quotes", component: <QuotesSlide /> },
-      { 
-        id: "themes", 
-        title: "Themes", 
-        component: <ThemesSlide onThemeClick={(id) => {
-          setSelectedThemeId(id);
-          setCurrentSlideId("theme-details");
-        }} /> 
+      {
+        id: "themes",
+        title: "Themes",
+        component: (
+          <ThemesSlide
+            onThemeClick={(id) => {
+              setSelectedThemeId(id);
+              setCurrentSlideId("theme-details");
+            }}
+          />
+        ),
       },
-      { 
-        id: "theme-details", 
-        title: "Theme Details", 
-        component: <ThemeDetailsSlide themeId={selectedThemeId} onThemeChange={setSelectedThemeId} /> 
+      {
+        id: "theme-details",
+        title: "Theme Details",
+        component: (
+          <ThemeDetailsSlide
+            themeId={selectedThemeId}
+            onThemeChange={setSelectedThemeId}
+          />
+        ),
       },
     ];
-
-    if (!votingEnabled) {
-      baseSlides.push({
-        id: "breakout-reflections",
-        title: "Themed Reflections",
-        component: (
-          <BreakoutReflectionsSlide
-            presentationData={presentationData}
-            breakoutReflections={breakoutReflections}
-            onOpenShareModal={() => setIsShareModalOpen(true)}
-            discussionsEnabled={discussionsEnabled}
-            onToggleDiscussions={() =>
-              setDiscussionsEnabled((current) => {
-                const nextValue = !current;
-                writeParticipantAccess(
-                  participantSession.sessionId,
-                  votingEnabled,
-                  nextValue,
-                  participantDiscussionVariant,
-                );
-                return nextValue;
-              })
-            }
-          />
-        ),
-      });
-      baseSlides.push({
-        id: "breakout-reflections-open",
-        title: "Open Reflections",
-        component: (
-          <OpenBreakoutReflectionsSlide
-            presentationData={presentationData}
-            breakoutReflections={breakoutReflections}
-            onOpenShareModal={() => setIsShareModalOpen(true)}
-            discussionsEnabled={discussionsEnabled}
-            onToggleDiscussions={() =>
-              setDiscussionsEnabled((current) => {
-                const nextValue = !current;
-                writeParticipantAccess(
-                  participantSession.sessionId,
-                  votingEnabled,
-                  nextValue,
-                  participantDiscussionVariant,
-                );
-                return nextValue;
-              })
-            }
-          />
-        ),
-      });
-    }
 
     if (votingEnabled) {
       baseSlides.push({
@@ -638,31 +732,9 @@ export default function PresentationPage() {
           />
         ),
       });
+    }
 
-      baseSlides.push({
-        id: "breakout-reflections",
-        title: "Themed Reflections",
-        component: (
-          <BreakoutReflectionsSlide
-            presentationData={presentationData}
-            breakoutReflections={breakoutReflections}
-            onOpenShareModal={() => setIsShareModalOpen(true)}
-            discussionsEnabled={discussionsEnabled}
-            onToggleDiscussions={() =>
-              setDiscussionsEnabled((current) => {
-                const nextValue = !current;
-                writeParticipantAccess(
-                  participantSession.sessionId,
-                  votingEnabled,
-                  nextValue,
-                  participantDiscussionVariant,
-                );
-                return nextValue;
-              })
-            }
-          />
-        ),
-      });
+    if (discussionsEnabled) {
       baseSlides.push({
         id: "breakout-reflections-open",
         title: "Open Reflections",
@@ -672,24 +744,13 @@ export default function PresentationPage() {
             breakoutReflections={breakoutReflections}
             onOpenShareModal={() => setIsShareModalOpen(true)}
             discussionsEnabled={discussionsEnabled}
-            onToggleDiscussions={() =>
-              setDiscussionsEnabled((current) => {
-                const nextValue = !current;
-                writeParticipantAccess(
-                  participantSession.sessionId,
-                  votingEnabled,
-                  nextValue,
-                  participantDiscussionVariant,
-                );
-                return nextValue;
-              })
-            }
+            onToggleDiscussions={() => handleToggleDiscussions()}
           />
         ),
       });
     }
 
-    if (!votingEnabled) {
+    if (actionCenterEnabled) {
       baseSlides.push({
         id: "action-v1",
         title: "Action Center",
@@ -736,7 +797,9 @@ export default function PresentationPage() {
     presentationData,
     breakoutReflections,
     discussionsEnabled,
+    handleToggleDiscussions,
     votingEnabled,
+    actionCenterEnabled,
     votingSession,
     actionState,
     selectedThemeId,
@@ -790,43 +853,6 @@ export default function PresentationPage() {
   const handleJump = (slideId) => {
     setCurrentSlideId(slideId);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const disableVoting = () => {
-    setVotingSession(createVotingSession(presentationData));
-
-    if (currentSlideId === "voting") {
-      setCurrentSlideId("results-snapshot");
-    }
-
-    writeParticipantAccess(
-      participantSession.sessionId,
-      false,
-      discussionsEnabled,
-      participantDiscussionVariant,
-    );
-    setVotingEnabled(false);
-  };
-
-  const handleToggleVoting = () => {
-    if (votingEnabled) {
-      if (votingSession.phase === "results") {
-        setShowDeleteVotingResultsConfirm(true);
-        return;
-      }
-
-      disableVoting();
-      return;
-    }
-
-    setVotingEnabled(true);
-    writeParticipantAccess(
-      participantSession.sessionId,
-      true,
-      discussionsEnabled,
-      participantDiscussionVariant,
-    );
-    setCurrentSlideId("voting");
   };
 
   React.useEffect(() => {
@@ -1016,6 +1042,11 @@ export default function PresentationPage() {
             slideTitle={activeSlide?.title}
             votingEnabled={votingEnabled}
             onToggleVoting={handleToggleVoting}
+            discussionsEnabled={discussionsEnabled}
+            onToggleDiscussions={handleToggleDiscussions}
+            actionCenterEnabled={actionCenterEnabled}
+            onToggleActionCenter={handleToggleActionCenter}
+            featureFeedback={featureFeedback}
           />
         </>
       ) : (

@@ -5,6 +5,9 @@ import {
   ChevronDown,
   Check,
   Maximize,
+  ListChecks,
+  MessageSquareText,
+  ClipboardList,
 } from "lucide-react";
 import { presentationTheme } from "../lib/presentationTheme";
 
@@ -143,6 +146,58 @@ export const TopBar = ({
   );
 };
 
+function FeatureToggleButton({
+  icon: Icon,
+  label,
+  tooltip,
+  active,
+  feedback,
+  activeClasses = "",
+  activeIconClass = "",
+  onClick,
+  onHoverChange,
+  ariaLabel,
+}) {
+  const showTooltip = Boolean(feedback) || Boolean(tooltip?.visible);
+  const tooltipText = feedback || tooltip?.text || label;
+
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      aria-label={ariaLabel || label}
+      onClick={onClick}
+      onMouseEnter={() => onHoverChange(true)}
+      onMouseLeave={() => onHoverChange(false)}
+      onFocus={() => onHoverChange(true)}
+      onBlur={() => onHoverChange(false)}
+      className={`group relative p-2.5 border rounded-full transition-all h-[44px] w-[44px] flex items-center justify-center flex-shrink-0 shadow-[0_1px_2px_rgba(31,41,55,0.06)] ${ui.focusRing} ${
+        active
+          ? `border-black ${activeClasses} text-white shadow-[0_6px_16px_rgba(17,24,39,0.18)]`
+          : `${ui.surface} ${ui.border} ${ui.textMuted} hover:text-[var(--presentation-text)] hover:bg-[var(--presentation-surface-muted)]`
+      }`}
+    >
+      <Icon
+        size={20}
+        className={`${active ? activeIconClass : ui.textMuted} ${active ? "stroke-[2.3]" : "stroke-[2.1]"}`}
+      />
+      {active && (
+        <span
+          aria-hidden="true"
+          className="absolute right-1 top-1 h-2 w-2 rounded-full bg-white shadow-[0_0_0_2px_rgba(17,24,39,0.95)]"
+        />
+      )}
+      <span
+        className={`pointer-events-none absolute bottom-full left-1/2 z-50 mb-3 -translate-x-1/2 whitespace-nowrap rounded-full border px-3 py-1.5 text-[11px] font-medium shadow-[0_8px_20px_rgba(31,41,55,0.14)] transition-all duration-150 ${
+          showTooltip ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1"
+        } ${ui.surface} ${ui.border} ${ui.text}`}
+      >
+        {tooltipText}
+      </span>
+    </button>
+  );
+}
+
 export const BottomBar = ({
   currentSlide,
   currentSlideId,
@@ -154,8 +209,14 @@ export const BottomBar = ({
   slideTitle,
   votingEnabled,
   onToggleVoting,
+  discussionsEnabled,
+  onToggleDiscussions,
+  actionCenterEnabled,
+  onToggleActionCenter,
+  featureFeedback = {},
 }) => {
   const [showMenu, setShowMenu] = useState(false);
+  const [featureHover, setFeatureHover] = useState(null);
   const menuRef = useRef(null);
   const buttonRef = useRef(null);
 
@@ -192,33 +253,58 @@ export const BottomBar = ({
     <div
       className={`fixed bottom-0 left-0 right-0 h-20 bg-[color:rgb(255_255_255_/_0.88)] backdrop-blur-md border-t ${ui.border} px-8 flex items-center justify-center z-50`}
     >
-      <div className="absolute left-8">
-        <button
-          type="button"
+      <div className="absolute left-8 flex items-center gap-2">
+        <FeatureToggleButton
+          icon={ListChecks}
+          label="Prioritization"
+          activeClasses="bg-black"
+          activeIconClass="text-white"
+          tooltip={{
+            visible: featureHover === "prioritization" || Boolean(featureFeedback.prioritization),
+            text: "Prioritization",
+          }}
+          active={votingEnabled}
+          feedback={featureFeedback.prioritization}
           onClick={onToggleVoting}
-          aria-pressed={votingEnabled}
-          className={`h-[44px] px-3 pr-4 rounded-full flex items-center gap-3 text-sm font-medium transition-all shadow-[0_1px_2px_rgba(31,41,55,0.06)] ${
-            votingEnabled
-              ? "bg-[#fffffe] text-[var(--presentation-text)]"
-              : `bg-[#fffffe] ${ui.textMuted} hover:text-[var(--presentation-text)]`
-          } ${ui.focusRing}`}
-        >
-          <span
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              votingEnabled
-                ? "bg-[var(--presentation-text)]"
-                : "bg-[var(--presentation-border)]"
-            }`}
-            aria-hidden="true"
-          >
-            <span
-              className={`inline-block h-5 w-5 rounded-full bg-white shadow-[0_1px_3px_rgba(31,41,55,0.18)] transition-transform ${
-                votingEnabled ? "translate-x-5" : "translate-x-0.5"
-              }`}
-            />
-          </span>
-          Prioritize themes
-        </button>
+          onHoverChange={(isHovered) =>
+            setFeatureHover((current) => (isHovered ? "prioritization" : current === "prioritization" ? null : current))
+          }
+          ariaLabel="Toggle prioritization"
+        />
+        <FeatureToggleButton
+          icon={MessageSquareText}
+          label="Discussions"
+          activeClasses="bg-black"
+          activeIconClass="text-white"
+          tooltip={{
+            visible: featureHover === "discussions" || Boolean(featureFeedback.discussions),
+            text: "Open discussions",
+          }}
+          active={discussionsEnabled}
+          feedback={featureFeedback.discussions}
+          onClick={onToggleDiscussions}
+          onHoverChange={(isHovered) =>
+            setFeatureHover((current) => (isHovered ? "discussions" : current === "discussions" ? null : current))
+          }
+          ariaLabel="Toggle open discussions"
+        />
+        <FeatureToggleButton
+          icon={ClipboardList}
+          label="Action center"
+          activeClasses="bg-black"
+          activeIconClass="text-white"
+          tooltip={{
+            visible: featureHover === "actionCenter" || Boolean(featureFeedback.actionCenter),
+            text: "Action center",
+          }}
+          active={actionCenterEnabled}
+          feedback={featureFeedback.actionCenter}
+          onClick={onToggleActionCenter}
+          onHoverChange={(isHovered) =>
+            setFeatureHover((current) => (isHovered ? "actionCenter" : current === "actionCenter" ? null : current))
+          }
+          ariaLabel="Toggle action center"
+        />
       </div>
 
       <div className="flex items-center justify-center gap-3">
