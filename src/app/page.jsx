@@ -29,7 +29,7 @@ import {
   readBreakoutReflections,
   subscribeToBreakoutReflections,
 } from "../lib/breakoutReflections";
-import { writeParticipantAccess } from "../lib/participantAccess";
+import { getParticipantAccessQuery, writeParticipantAccess } from "../lib/participantAccess";
 import { createParticipantSessionModel } from "../lib/participantSession";
 
 function resolvePublicAppOrigin() {
@@ -46,10 +46,6 @@ function resolvePublicAppOrigin() {
   }
 
   return "https://canvas-v2-can.vercel.app";
-}
-
-function getParticipantModeQuery(votingEnabled) {
-  return votingEnabled ? "mode=prioritization" : "mode=readup";
 }
 
 function getParticipantDiscussionVariant() {
@@ -523,22 +519,23 @@ export default function PresentationPage() {
   };
 
   const participantSession = useMemo(
-    () => createParticipantSessionModel(presentationData),
-    [presentationData],
+    () => createParticipantSessionModel(presentationData, votingSession),
+    [presentationData, votingSession],
   );
   const participantPath = useMemo(
     () => getParticipantPath(participantSession.sessionId),
     [participantSession.sessionId],
   );
-  const participantModeQuery = getParticipantModeQuery(votingEnabled);
   const participantDiscussionVariant = getParticipantDiscussionVariant();
   const publicAppOrigin = resolvePublicAppOrigin();
-  const participantShareLink = `${publicAppOrigin}${participantPath}?${[
-    participantModeQuery,
-    discussionsEnabled ? `discussion=${participantDiscussionVariant}` : null,
-  ]
-    .filter(Boolean)
-    .join("&")}`;
+  const participantAccessQuery = getParticipantAccessQuery({
+    prioritizationEnabled: votingEnabled,
+    discussionsEnabled,
+    discussionVariant: participantDiscussionVariant,
+  });
+  const participantShareLink = `${publicAppOrigin}${participantPath}${
+    participantAccessQuery ? `?${participantAccessQuery}` : ""
+  }`;
   const activeView = route.kind === "report" ? "report" : "canvas";
   const [breakoutReflections, setBreakoutReflections] = useState(() =>
     readBreakoutReflections(participantSession.sessionId),
@@ -585,6 +582,7 @@ export default function PresentationPage() {
     const nextValue = !votingSlideVisible;
 
     setVotingSlideVisible(nextValue);
+    setVotingEnabled(nextValue);
 
     if (!nextValue && currentSlideId === "voting") {
       setCurrentSlideId("theme-details");

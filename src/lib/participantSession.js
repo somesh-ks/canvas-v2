@@ -1,6 +1,6 @@
 import { getSessionIdFromPresentationData } from "./appRoutes.js";
 
-export function createParticipantSessionModel(presentationData) {
+export function createParticipantSessionModel(presentationData, votingSession = {}) {
   const sessionId = getSessionIdFromPresentationData(presentationData);
 
   return {
@@ -9,10 +9,10 @@ export function createParticipantSessionModel(presentationData) {
     logo: presentationData.logo,
     goal: presentationData.goal,
     joinCode: presentationData.voting.joinCode,
-    question: presentationData.voting.question,
+    question: votingSession.question || presentationData.voting.question,
     reflectionQuestion: "What is your main takeaway from this discussion?",
     openReflectionQuestion: "What is one takeaway you want others to hear?",
-    votesPerPerson: presentationData.voting.votesPerPerson,
+    votesPerPerson: votingSession.votesPerPerson || presentationData.voting.votesPerPerson,
     themes: presentationData.themes.map((theme) => ({
       id: theme.id,
       title: theme.title,

@@ -6,58 +6,63 @@ function getAccessKey(sessionId) {
 
 export function getParticipantModeFromSearch(search) {
   const mode = new URLSearchParams(search).get("mode");
-  return mode === "prioritization" ? "prioritization" : "readup";
+  return mode === "prio" || mode === "prioritization" ? "prioritization" : "readup";
 }
 
 export function getParticipantDiscussionVariantFromSearch(search) {
-  const discussionVariant = new URLSearchParams(search).get("discussion");
+  const params = new URLSearchParams(search);
+  const discussionVariant = params.get("discussion");
+  if (params.get("mode") === "discuss" || params.has("discuss")) {
+    return "open";
+  }
+
   return discussionVariant === "open" ? "open" : "theme";
 }
 
 export function hasParticipantDiscussionVariantInSearch(search) {
-  return new URLSearchParams(search).has("discussion");
+  const params = new URLSearchParams(search);
+  return params.get("mode") === "discuss" || params.has("discuss") || params.has("discussion");
+}
+
+export function hasParticipantAccessParamsInSearch(search) {
+  const params = new URLSearchParams(search);
+  return params.has("mode") || params.has("discuss") || params.has("discussion");
+}
+
+export function getParticipantAccessQuery({
+  prioritizationEnabled = false,
+  discussionsEnabled = false,
+} = {}) {
+  const hasPrioritization = Boolean(prioritizationEnabled);
+  const hasDiscussions = Boolean(discussionsEnabled);
+
+  if (hasPrioritization && hasDiscussions) {
+    return "mode=prio&discuss";
+  }
+
+  if (hasPrioritization) {
+    return "mode=prio";
+  }
+
+  if (hasDiscussions) {
+    return "mode=discuss";
+  }
+
+  return "";
 }
 
 export function readParticipantAccess(
-  sessionId,
+  _sessionId,
   fallbackMode = "readup",
   fallbackDiscussionVariant = "theme",
   hasDiscussionParam = false,
+  _hasAccessParams = false,
 ) {
-  if (typeof window === "undefined") {
-    return {
-      prioritizationEnabled: fallbackMode === "prioritization",
-      discussionsEnabled: hasDiscussionParam,
-      discussionVariant: fallbackDiscussionVariant,
-    };
-  }
-
-  try {
-    const rawValue = window.localStorage.getItem(getAccessKey(sessionId));
-
-    if (!rawValue) {
-      return {
-        prioritizationEnabled: fallbackMode === "prioritization",
-        discussionsEnabled: hasDiscussionParam,
-        discussionVariant: fallbackDiscussionVariant,
-      };
-    }
-
-    const parsedValue = JSON.parse(rawValue);
-    return {
-      prioritizationEnabled: Boolean(parsedValue?.prioritizationEnabled),
-      discussionsEnabled:
-        hasDiscussionParam || Boolean(parsedValue?.discussionsEnabled),
-      discussionVariant:
-        parsedValue?.discussionVariant === "open" ? "open" : fallbackDiscussionVariant,
-    };
-  } catch {
-    return {
-      prioritizationEnabled: fallbackMode === "prioritization",
-      discussionsEnabled: hasDiscussionParam,
-      discussionVariant: fallbackDiscussionVariant,
-    };
-  }
+  return {
+    prioritizationEnabled: fallbackMode === "prioritization",
+    discussionsEnabled: hasDiscussionParam,
+    discussionVariant: fallbackDiscussionVariant,
+  };
 }
 
 export function writeParticipantAccess(

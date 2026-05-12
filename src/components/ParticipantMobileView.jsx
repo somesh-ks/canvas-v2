@@ -15,6 +15,7 @@ import {
 import {
   getParticipantModeFromSearch,
   getParticipantDiscussionVariantFromSearch,
+  hasParticipantAccessParamsInSearch,
   hasParticipantDiscussionVariantInSearch,
   readParticipantAccess,
   subscribeToParticipantAccess,
@@ -570,6 +571,9 @@ export default function ParticipantMobileView({ session }) {
   const hasInitialDiscussionParam = hasParticipantDiscussionVariantInSearch(
     typeof window === "undefined" ? "" : window.location.search,
   );
+  const hasInitialAccessParams = hasParticipantAccessParamsInSearch(
+    typeof window === "undefined" ? "" : window.location.search,
+  );
   const [prioritizationEnabled, setPrioritizationEnabled] = React.useState(
     () =>
       readParticipantAccess(
@@ -577,6 +581,7 @@ export default function ParticipantMobileView({ session }) {
         initialMode,
         initialDiscussionVariant,
         hasInitialDiscussionParam,
+        hasInitialAccessParams,
       ).prioritizationEnabled,
   );
   const [discussionsEnabled, setDiscussionsEnabled] = React.useState(
@@ -586,6 +591,7 @@ export default function ParticipantMobileView({ session }) {
         initialMode,
         initialDiscussionVariant,
         hasInitialDiscussionParam,
+        hasInitialAccessParams,
       ).discussionsEnabled,
   );
   const [state, setState] = React.useState(() =>
@@ -601,11 +607,13 @@ export default function ParticipantMobileView({ session }) {
     const hasDiscussionParam = hasParticipantDiscussionVariantInSearch(
       window.location.search,
     );
+    const hasAccessParams = hasParticipantAccessParamsInSearch(window.location.search);
     const access = readParticipantAccess(
       session.sessionId,
       fallbackMode,
       fallbackDiscussionVariant,
       hasDiscussionParam,
+      hasAccessParams,
     );
     setPrioritizationEnabled(access.prioritizationEnabled);
     setDiscussionsEnabled(access.discussionsEnabled);
@@ -617,6 +625,7 @@ export default function ParticipantMobileView({ session }) {
         fallbackMode,
         fallbackDiscussionVariant,
         hasDiscussionParam,
+        hasAccessParams,
       );
 
       setPrioritizationEnabled(nextAccess.prioritizationEnabled);
