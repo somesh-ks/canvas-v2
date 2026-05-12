@@ -205,11 +205,11 @@ export const BottomBar = ({
   onNext,
   onJump,
   slideTitle,
-  votingEnabled,
+  votingSlideVisible,
   onToggleVoting,
-  discussionsEnabled,
-  onToggleDiscussions,
-  actionCenterEnabled,
+  discussionsSlideVisible,
+  onToggleDiscussionsSlide,
+  actionCenterSlideVisible,
   onToggleActionCenter,
   featureFeedback = {},
 }) => {
@@ -261,7 +261,7 @@ export const BottomBar = ({
             visible: featureHover === "prioritization" || Boolean(featureFeedback.prioritization),
             text: "Prioritization",
           }}
-          active={votingEnabled}
+          active={votingSlideVisible}
           feedback={featureFeedback.prioritization}
           onClick={onToggleVoting}
           onHoverChange={(isHovered) =>
@@ -278,9 +278,9 @@ export const BottomBar = ({
             visible: featureHover === "discussions" || Boolean(featureFeedback.discussions),
             text: "Open discussions",
           }}
-          active={discussionsEnabled}
+          active={discussionsSlideVisible}
           feedback={featureFeedback.discussions}
-          onClick={onToggleDiscussions}
+          onClick={onToggleDiscussionsSlide}
           onHoverChange={(isHovered) =>
             setFeatureHover((current) => (isHovered ? "discussions" : current === "discussions" ? null : current))
           }
@@ -295,7 +295,7 @@ export const BottomBar = ({
             visible: featureHover === "actionCenter" || Boolean(featureFeedback.actionCenter),
             text: "Action center",
           }}
-          active={actionCenterEnabled}
+          active={actionCenterSlideVisible}
           feedback={featureFeedback.actionCenter}
           onClick={onToggleActionCenter}
           onHoverChange={(isHovered) =>

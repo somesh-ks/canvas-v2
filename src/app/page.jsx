@@ -508,9 +508,10 @@ export default function PresentationPage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [votingEnabled, setVotingEnabled] = useState(false);
   const [discussionsEnabled, setDiscussionsEnabled] = useState(false);
-  const [actionCenterEnabled, setActionCenterEnabled] = useState(false);
+  const [votingSlideVisible, setVotingSlideVisible] = useState(false);
+  const [discussionsSlideVisible, setDiscussionsSlideVisible] = useState(false);
+  const [actionCenterSlideVisible, setActionCenterSlideVisible] = useState(false);
   const [votingSession, setVotingSession] = useState(() => createVotingSession(initialData));
-  const [showDeleteVotingResultsConfirm, setShowDeleteVotingResultsConfirm] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [actionState, setActionState] = useState({});
   const [route, setRoute] = useState(() => parseAppRoute(window.location.pathname));
@@ -580,58 +581,20 @@ export default function PresentationPage() {
     }
   }, [participantShareLink]);
 
-  const disableVoting = React.useCallback(() => {
-    setVotingSession(createVotingSession(presentationData));
-
-    if (currentSlideId === "voting") {
-      setCurrentSlideId("results-snapshot");
-    }
-
-    writeParticipantAccess(
-      participantSession.sessionId,
-      false,
-      discussionsEnabled,
-      participantDiscussionVariant,
-    );
-    setVotingEnabled(false);
-    flashFeatureFeedback("prioritization", "Prioritization disabled");
-  }, [
-    currentSlideId,
-    discussionsEnabled,
-    participantDiscussionVariant,
-    participantSession.sessionId,
-    presentationData,
-    flashFeatureFeedback,
-  ]);
-
   const handleToggleVoting = React.useCallback(() => {
-    if (votingEnabled) {
-      if (votingSession.phase === "results") {
-        setShowDeleteVotingResultsConfirm(true);
-        return;
-      }
+    const nextValue = !votingSlideVisible;
 
-      disableVoting();
-      return;
+    setVotingSlideVisible(nextValue);
+
+    if (!nextValue && currentSlideId === "voting") {
+      setCurrentSlideId("theme-details");
     }
 
-    setVotingEnabled(true);
-    writeParticipantAccess(
-      participantSession.sessionId,
-      true,
-      discussionsEnabled,
-      participantDiscussionVariant,
+    flashFeatureFeedback(
+      "prioritization",
+      nextValue ? "Prioritization slide added" : "Prioritization slide removed",
     );
-    flashFeatureFeedback("prioritization", "Prioritization enabled");
-  }, [
-    disableVoting,
-    discussionsEnabled,
-    participantDiscussionVariant,
-    participantSession.sessionId,
-    flashFeatureFeedback,
-    votingEnabled,
-    votingSession.phase,
-  ]);
+  }, [currentSlideId, flashFeatureFeedback, votingSlideVisible]);
 
   const handleToggleDiscussions = React.useCallback(() => {
     const nextValue = !discussionsEnabled;
@@ -663,22 +626,35 @@ export default function PresentationPage() {
     votingEnabled,
   ]);
 
-  const handleToggleActionCenter = React.useCallback(() => {
-    const nextValue = !actionCenterEnabled;
+  const handleToggleDiscussionsSlide = React.useCallback(() => {
+    const nextValue = !discussionsSlideVisible;
 
-    setActionCenterEnabled(nextValue);
+    setDiscussionsSlideVisible(nextValue);
 
-    if (nextValue) {
-      flashFeatureFeedback("actionCenter", "Action Center enabled");
-      return;
+    if (!nextValue && currentSlideId === "breakout-reflections-open") {
+      setCurrentSlideId("theme-details");
     }
 
-    if (currentSlideId === "action-v1") {
+    flashFeatureFeedback(
+      "discussions",
+      nextValue ? "Discussions slide added" : "Discussions slide removed",
+    );
+  }, [currentSlideId, discussionsSlideVisible, flashFeatureFeedback]);
+
+  const handleToggleActionCenter = React.useCallback(() => {
+    const nextValue = !actionCenterSlideVisible;
+
+    setActionCenterSlideVisible(nextValue);
+
+    if (!nextValue && currentSlideId === "action-v1") {
       setCurrentSlideId("results-snapshot");
     }
 
-    flashFeatureFeedback("actionCenter", "Action Center disabled");
-  }, [actionCenterEnabled, currentSlideId, flashFeatureFeedback]);
+    flashFeatureFeedback(
+      "actionCenter",
+      nextValue ? "Action Center slide added" : "Action Center slide removed",
+    );
+  }, [actionCenterSlideVisible, currentSlideId, flashFeatureFeedback]);
 
   useEffect(() => {
     return () => {
@@ -717,7 +693,7 @@ export default function PresentationPage() {
       },
     ];
 
-    if (votingEnabled) {
+    if (votingSlideVisible) {
       baseSlides.push({
         id: "voting",
         title: "Prioritization",
@@ -734,7 +710,7 @@ export default function PresentationPage() {
       });
     }
 
-    if (discussionsEnabled) {
+    if (discussionsSlideVisible) {
       baseSlides.push({
         id: "breakout-reflections-open",
         title: "Open Discussions",
@@ -744,13 +720,13 @@ export default function PresentationPage() {
             breakoutReflections={breakoutReflections}
             onOpenShareModal={() => setIsShareModalOpen(true)}
             discussionsEnabled={discussionsEnabled}
-            onToggleDiscussions={() => handleToggleDiscussions()}
+            onToggleDiscussions={handleToggleDiscussions}
           />
         ),
       });
     }
 
-    if (actionCenterEnabled) {
+    if (actionCenterSlideVisible) {
       baseSlides.push({
         id: "action-v1",
         title: "Action Center",
@@ -796,10 +772,10 @@ export default function PresentationPage() {
     participantShareLink,
     presentationData,
     breakoutReflections,
-    discussionsEnabled,
+    discussionsSlideVisible,
     handleToggleDiscussions,
-    votingEnabled,
-    actionCenterEnabled,
+    votingSlideVisible,
+    actionCenterSlideVisible,
     votingSession,
     actionState,
     selectedThemeId,
@@ -987,50 +963,6 @@ export default function PresentationPage() {
         <>
           <main className="min-h-[calc(100vh-9rem)] animate-fade-in">{activeSlide?.component}</main>
 
-          {showDeleteVotingResultsConfirm && (
-            <div
-              data-voting-delete-confirm="true"
-              role="dialog"
-              aria-modal="true"
-              className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-[var(--presentation-overlay)] backdrop-blur-xl"
-              onClick={() => setShowDeleteVotingResultsConfirm(false)}
-            >
-              <div
-                className={`${presentationTheme.classes.panelStrong} w-full max-w-xl rounded-[32px] p-8 shadow-[0_24px_80px_rgba(31,41,55,0.18)]`}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="space-y-3">
-                  <h3 className={`text-2xl font-semibold ${presentationTheme.classes.text}`}>
-                    Delete prioritization results?
-                  </h3>
-                  <p className={`text-base leading-relaxed ${presentationTheme.classes.textMuted}`}>
-                    Are you sure to delete the prioritization results?
-                  </p>
-                </div>
-
-                <div className="mt-8 flex items-center justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowDeleteVotingResultsConfirm(false)}
-                    className={`h-11 px-5 rounded-xl ${presentationTheme.classes.control} ${presentationTheme.classes.controlHover} ${presentationTheme.classes.focusRing} text-sm font-medium ${presentationTheme.classes.text}`}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      disableVoting();
-                      setShowDeleteVotingResultsConfirm(false);
-                    }}
-                    className={`h-11 px-5 rounded-xl bg-[var(--presentation-text)] text-white text-sm font-semibold hover:opacity-90 transition-opacity ${presentationTheme.classes.focusRing}`}
-                  >
-                    Delete results
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
           <BottomBar
             currentSlide={safeCurrentSlideIndex}
             currentSlideId={activeSlide?.id}
@@ -1040,11 +972,11 @@ export default function PresentationPage() {
             onNext={handleNext}
             onJump={handleJump}
             slideTitle={activeSlide?.title}
-            votingEnabled={votingEnabled}
+            votingSlideVisible={votingSlideVisible}
             onToggleVoting={handleToggleVoting}
-            discussionsEnabled={discussionsEnabled}
-            onToggleDiscussions={handleToggleDiscussions}
-            actionCenterEnabled={actionCenterEnabled}
+            discussionsSlideVisible={discussionsSlideVisible}
+            onToggleDiscussionsSlide={handleToggleDiscussionsSlide}
+            actionCenterSlideVisible={actionCenterSlideVisible}
             onToggleActionCenter={handleToggleActionCenter}
             featureFeedback={featureFeedback}
           />
